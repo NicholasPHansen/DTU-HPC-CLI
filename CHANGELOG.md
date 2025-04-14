@@ -2,6 +2,9 @@
 
 ## v1.3.0
 
+Submit:
+* Sync is now run after a job script has been confirmed.
+
 ## v1.2.0
 
 Option to show CLI version with `--version`.
