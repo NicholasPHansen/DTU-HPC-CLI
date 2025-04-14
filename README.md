@@ -8,6 +8,7 @@ CLI for working with the High Performance Cluster (HPC) at the Technical Univers
   - [Example](#example)
   - [Configuration](#configuration)
     - [SSH](#ssh)
+    - [Modules](#modules)
     - [Install](#install)
     - [History](#history)
     - [Remote Location](#remote-location)
@@ -143,6 +144,18 @@ The SSH configuration requires that you at least add a *user* and *identityfile*
 }
 ```
 
+### Modules
+
+Your code may need to load specific modules to work. You can specify these modules here and they will automatically be loaded when using `install` and `submit`.
+
+``` json
+{
+    "modules": [
+        "python3/3.11.8"
+    ]
+}
+```
+
 ### Install
 
 The `install` command requires that you provide a set of commands to run. These are provided in *commands* using the *install* option. You may optionally specify *sync* to either *false* or *true*. This determines whether to automatically synchronize your project before running the install commands and default to *true*.
@@ -212,10 +225,7 @@ Provide your own default settings for any of the *submit* options:
         "model": "XeonGold6230",
         "name": "my_job",
         "output": "path/to/output_dir_",
-        "preamble": [
-            "module use cuda/12.2",
-            "module use python3/3.11.9"
-        ],
+        "preamble": [],
         "queue": "hpc",
         "split_every": "1d",
         "start_after": "12345678",
@@ -242,6 +252,9 @@ Here is a complete example for a configuration that customizes everything:
         ],
         "sync": true,
     },
+    "modules": [
+        "python3/3.11.8"
+    ],
     "remote_path": "path/to/project/on/hpc",
     "ssh": {
         "user": "your_dtu_username",
@@ -264,10 +277,7 @@ Here is a complete example for a configuration that customizes everything:
         "model": "XeonGold6230",
         "name": "my_job",
         "output": "path/to/output_dir_",
-        "preamble": [
-            "module use cuda/12.2",
-            "module use python3/3.11.9"
-        ],
+        "preamble": [],
         "queue": "hpc",
         "split_every": "1d",
         "start_after": "12345678",
