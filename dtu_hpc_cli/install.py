@@ -22,10 +22,18 @@ def execute_install():
             progress.start()
             with get_client() as client:
                 for command in install.commands:
-                    command = f"git switch {branch} && {command}"
+                    augmented_command = augment_command(command, branch, cli_config.modules)
                     progress.update(task, description=command)
-                    client.run(command, cwd=cli_config.remote_path)
+                    client.run(augmented_command, cwd=cli_config.remote_path)
             progress.update(task, completed=True)
         typer.echo("Finished installation.")
     else:
         typer.echo(f"There is nothing to install. Please set the install field in '{CONFIG_FILENAME}'.")
+
+
+def augment_command(command: str, branch: str, modules: list[str] | None) -> str:
+    if modules is not None:
+        modules = [f"module load {module}" for module in modules]
+        modules = " && ".join(modules)
+        command = f"{modules} && {command}"
+    return f"git switch {branch} && {command}"
