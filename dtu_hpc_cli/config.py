@@ -195,6 +195,7 @@ class SubmitConfig:
 class CLIConfig:
     history_path: Path
     install: InstallConfig | None
+    modules: list[str] | None
     project_root: Path
     remote_path: str
     ssh: SSHConfig | None
@@ -218,18 +219,17 @@ class CLIConfig:
         if not isinstance(config, dict):
             error_and_exit(f"Invalid type for config. Expected dictionary but got {type(config)}.")
 
-        install = InstallConfig.load(config)
-
         history_path = cls.load_history_path(config, project_root)
-
+        install = InstallConfig.load(config)
+        modules = cls.load_modules(config)
         remote_path = cls.load_remote_path(config, project_root)
         ssh = SSHConfig.load(config)
-
         submit = SubmitConfig.load(config, project_root)
 
         return cls(
             history_path=history_path,
             install=install,
+            modules=modules,
             project_root=project_root,
             remote_path=remote_path,
             ssh=ssh,
@@ -263,6 +263,20 @@ class CLIConfig:
                 )
             return Path(history_path)
         return project_root / HISTORY_FILENAME
+
+    @classmethod
+    def load_modules(cls, config: dict) -> list[str] | None:
+        if "modules" in config:
+            modules = config["modules"]
+            if not isinstance(modules, list):
+                error_and_exit(f"Invalid type for modules option in config. Expected list but got {type(modules)}.")
+            for i, module in enumerate(modules):
+                if not isinstance(module, str):
+                    error_and_exit(
+                        f"Invalid type for module at index {i} in config. Expected string but got {type(module)}."
+                    )
+            return modules
+        return None
 
     @classmethod
     def load_remote_path(cls, config: dict, project_root: Path) -> str:
