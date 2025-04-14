@@ -2,6 +2,9 @@
 
 ## v1.3.0
 
+Config:
+* Option to specify modules that will automatically be loaded when using `install` and `submit`.
+
 Submit:
 * Sync is now run after a job script has been confirmed.
 
