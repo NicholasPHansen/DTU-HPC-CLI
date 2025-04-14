@@ -87,6 +87,12 @@ def submit(client: Client, submit_config: SubmitConfig) -> str:
 
 
 def create_job_script(config: SubmitConfig) -> str:
+    modules = []
+    if cli_config.modules is not None:
+        modules = [f"module load {module}" for module in cli_config.modules]
+        modules.insert(0, "")
+        modules.insert(1, "# Modules")
+
     preamble = []
     for command in config.preamble:
         command = prepare_command(config, command)
@@ -137,6 +143,7 @@ def create_job_script(config: SubmitConfig) -> str:
         "### General options",
         *options,
         "# -- end of LSF options --",
+        *modules,
         *preamble,
         "",
         "# Commands",
