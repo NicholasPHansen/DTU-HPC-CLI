@@ -11,17 +11,9 @@ from dtu_hpc_cli.config import cli_config
 from dtu_hpc_cli.error import error_and_exit
 
 
-def execute_sync():
-    with Repo(cli_config.project_root) as repo:
-        if repo.is_dirty() or len(repo.untracked_files) != 0:
-            prompt = (
-                "You have uncommitted changes.\n"
-                + "This may cause problems with switching branches.\n"
-                + "Do you want to continue synchronizing?"
-            )
-            confirmed = Confirm.ask(prompt, show_default=True, default=True)
-            if not confirmed:
-                raise typer.Exit()
+def execute_sync(confirm_changes: bool = True):
+    if confirm_changes:
+        check_and_confirm_changes()
 
     ssh = cli_config.ssh
     source = "./"
@@ -45,3 +37,16 @@ def execute_sync():
         except subprocess.CalledProcessError as e:
             error_and_exit(f"Sync failed:\n{e.stderr.decode()}")
         progress.update(task, completed=True)
+
+
+def check_and_confirm_changes():
+    with Repo(cli_config.project_root) as repo:
+        if repo.is_dirty() or len(repo.untracked_files) != 0:
+            prompt = (
+                "You have uncommitted changes.\n"
+                + "This may cause problems with switching branches.\n"
+                + "Do you want to continue synchronizing?"
+            )
+            confirmed = Confirm.ask(prompt, show_default=True, default=True)
+            if not confirmed:
+                raise typer.Exit()
