@@ -2,6 +2,9 @@
 
 ## v1.3.0
 
+New commands:
+* get-options: Similar to get-command, but only retrieves the selected options instead of the full command.
+
 Config:
 * Option to specify modules that will automatically be loaded when using `install` and `submit`.
 
