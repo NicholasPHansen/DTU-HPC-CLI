@@ -7,6 +7,8 @@ from dtu_hpc_cli.config import SubmitConfig
 from dtu_hpc_cli.config import cli_config
 from dtu_hpc_cli.constants import CONFIG_FILENAME
 from dtu_hpc_cli.get_command import execute_get_command
+from dtu_hpc_cli.get_options import Option
+from dtu_hpc_cli.get_options import execute_get_options
 from dtu_hpc_cli.history import HistoryConfig
 from dtu_hpc_cli.history import execute_history
 from dtu_hpc_cli.install import execute_install
@@ -48,6 +50,12 @@ def main(version: Annotated[bool, typer.Option("--version", callback=version_cal
 def get_command(job_id: str):
     """Get the command used to submit a previous job."""
     execute_get_command(job_id)
+
+
+@cli.command()
+def get_options(job_id: str, options: List[Option]):
+    """Print options from a previously submitted job."""
+    execute_get_options(job_id, options)
 
 
 @cli.command()
