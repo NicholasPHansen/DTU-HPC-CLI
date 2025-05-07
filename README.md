@@ -13,6 +13,7 @@ CLI for working with the High Performance Cluster (HPC) at the Technical Univers
     - [History](#history)
     - [Remote Location](#remote-location)
     - [Submit](#submit)
+    - [Profiles](#profiles)
     - [Complete Configuration](#complete-configuration)
 
 
@@ -225,7 +226,7 @@ Provide your own default settings for any of the *submit* options:
         "memory": "5GB",
         "model": "XeonGold6230",
         "name": "my_job",
-        "output": "path/to/output_dir_",
+        "output": "path/to/output_dir",
         "preamble": [],
         "queue": "hpc",
         "split_every": "1d",
@@ -239,6 +240,27 @@ Provide your own default settings for any of the *submit* options:
 **NB.** *error* and *output* are directory locations on the HPC. The file path will be `[directory]/[name]_[jobId].out` for output and `[directory]/[name]_[jobId].err` for error.
 
 **NB.** *branch* defaults to the special value `[[active_branch]]`. This means that it will use the currently active branch.
+
+### Profiles
+
+Use profiles to easily change between different configurations in the same project. For example, you may want to use different ressources for a CPU job and a GPU job. This can be accomplished by defining two profiles as below and submitting as `dtu --profile cpu submit` and `dtu --profile gpu submit`. Profiles can override any setting and can be used for any command.
+
+``` json
+{
+    "profiles": {
+        "cpu": {
+            "queue": "hpc",
+            "cores": 4,
+            "memory": "5GB"
+        },
+        "gpu": {
+            "queue": "gpuv100",
+            "cores": 8,
+            "memory": "10GB"
+        }
+    }
+}
+```
 
 ### Complete Configuration
 
@@ -284,6 +306,18 @@ Here is a complete example for a configuration that customizes everything:
         "start_after": "12345678",
         "sync": true,
         "walltime": "1d"
+    },
+    "profiles": {
+        "cpu": {
+            "queue": "hpc",
+            "cores": 4,
+            "memory": "5GB"
+        },
+        "gpu": {
+            "queue": "gpuv100",
+            "cores": 8,
+            "memory": "10GB"
+        }
     }
 }
 ```
