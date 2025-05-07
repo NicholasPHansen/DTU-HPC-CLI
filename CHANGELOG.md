@@ -7,6 +7,7 @@ New commands:
 
 Config:
 * Option to specify modules that will automatically be loaded when using `install` and `submit`.
+* Profiles: Use `--profile` option to choose a profile from the config. Profiles make it easy to define specific configurations for different types of jobs.
 
 Submit:
 * Sync is now run after a job script has been confirmed.
