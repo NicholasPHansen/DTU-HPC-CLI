@@ -29,28 +29,44 @@ class InstallConfig:
             return None
 
         install = config["install"]
-
-        if isinstance(install, list):
-            # We support this configuration for backwards compatibility
-            return cls(commands=install, sync=True)
-
-        if not isinstance(install, dict):
-            error_and_exit(f"Invalid type for install option in config. Expected dictionary but got {type(install)}.")
+        install = InstallConfig.validate(install)
 
         if "commands" not in install:
             error_and_exit('"commands" not found in install config.')
 
-        commands = install["commands"]
-        if not isinstance(commands, list):
-            error_and_exit(
-                f"Invalid type for commands option in install config. Expected list but got {type(commands)}."
-            )
+        if "sync" not in install:
+            install["sync"] = True
 
-        sync = install.get("sync", True)
-        if not isinstance(sync, bool):
-            error_and_exit(f"Invalid type for sync option in install config. Expected boolean but got {type(sync)}.")
+        return cls(**install)
 
-        return cls(commands=commands, sync=sync)
+    @classmethod
+    def validate(cls, config: dict) -> dict:
+        if isinstance(config, list):
+            # We support this configuration for backwards compatibility
+            return {"commands": config}
+
+        if not isinstance(config, dict):
+            error_and_exit(f"Invalid type for install option in config. Expected dictionary but got {type(config)}.")
+
+        output = {}
+
+        commands = config.get("commands")
+        if commands is not None:
+            if not isinstance(commands, list):
+                error_and_exit(
+                    f"Invalid type for commands option in install config. Expected list but got {type(commands)}."
+                )
+            output["commands"] = commands
+
+        sync = config.get("sync")
+        if sync is not None:
+            if not isinstance(sync, bool):
+                error_and_exit(
+                    f"Invalid type for sync option in install config. Expected boolean but got {type(sync)}."
+                )
+            output["sync"] = sync
+
+        return output
 
 
 @dataclasses.dataclass
@@ -65,21 +81,47 @@ class SSHConfig:
             return None
 
         ssh = config["ssh"]
+        ssh = SSHConfig.validate(ssh)
 
-        if not isinstance(ssh, dict):
-            error_and_exit(f"Invalid type for ssh option in config. Expected dictionary but got {type(ssh)}.")
-
-        hostname = ssh.get("host", DEFAULT_HOSTNAME)
+        if "hostname" not in ssh:
+            ssh["hostname"] = DEFAULT_HOSTNAME
 
         if "user" not in ssh:
             error_and_exit('"user" not found in SSH config.')
-        user = ssh["user"]
 
         if "identityfile" not in ssh:
             error_and_exit('"identityfile" not found in SSH config')
-        identityfile = ssh["identityfile"]
 
-        return cls(hostname=hostname, identityfile=identityfile, user=user)
+        return cls(**ssh)
+
+    @classmethod
+    def validate(cls, config: dict) -> dict:
+        if not isinstance(config, dict):
+            error_and_exit(f"Invalid type for ssh option in config. Expected dictionary but got {type(config)}.")
+
+        output = {}
+
+        hostname = config.get("host")
+        if hostname is not None:
+            if not isinstance(hostname, str):
+                error_and_exit(f"Invalid type for host option in ssh config. Expected string but got {type(hostname)}.")
+            output["hostname"] = hostname
+
+        user = config.get("user")
+        if user is not None:
+            if not isinstance(user, str):
+                error_and_exit(f"Invalid type for user option in ssh config. Expected string but got {type(user)}.")
+            output["user"] = user
+
+        identityfile = config.get("identityfile")
+        if identityfile is not None:
+            if not isinstance(identityfile, str):
+                error_and_exit(
+                    f"Invalid type for identityfile option in ssh config. Expected string but got {type(identityfile)}."
+                )
+            output["identityfile"] = identityfile
+
+        return output
 
 
 @dataclasses.dataclass
@@ -130,18 +172,24 @@ class SubmitConfig:
             return cls.defaults()
 
         submit = config["submit"]
-
-        if not isinstance(submit, dict):
-            error_and_exit(f"Invalid type for submit option in config. Expected dictionary but got {type(submit)}.")
-
         submit = {key.replace("-", "_"): value for key, value in submit.items()}
-        for key in submit.keys():
+        submit = {**cls.defaults(), **submit}
+        submit = cls.validate(submit, project_root)
+
+        return submit
+
+    @classmethod
+    def validate(cls, config: dict, project_root: Path) -> dict:
+        if not isinstance(config, dict):
+            error_and_exit(f"Invalid type for submit option in config. Expected dictionary but got {type(config)}.")
+
+        output = {key.replace("-", "_"): value for key, value in config.items()}
+        for key in output.keys():
             if key not in cls.__annotations__:
                 error_and_exit(f"Unknown option in submit config: {key}")
 
-        output = {**cls.defaults(), **submit}
-
-        if output["branch"] == ACTIVE_BRANCH_KEY:
+        branch = output.get("branch")
+        if branch == ACTIVE_BRANCH_KEY:
             with Repo(project_root) as repo:
                 output["branch"] = repo.active_branch.name
 
@@ -198,6 +246,7 @@ class CLIConfig:
     modules: list[str] | None
     project_root: Path
     remote_path: str
+    profiles: dict | None
     ssh: SSHConfig | None
     submit: SubmitConfig | None
 
@@ -219,6 +268,10 @@ class CLIConfig:
         if not isinstance(config, dict):
             error_and_exit(f"Invalid type for config. Expected dictionary but got {type(config)}.")
 
+        profiles = config.get("profiles")
+        if profiles is not None and not isinstance(profiles, dict):
+            error_and_exit(f"Invalid type for profiles option in config. Expected dictionary but got {type(profiles)}.")
+
         history_path = cls.load_history_path(config, project_root)
         install = InstallConfig.load(config)
         modules = cls.load_modules(config)
@@ -230,6 +283,7 @@ class CLIConfig:
             history_path=history_path,
             install=install,
             modules=modules,
+            profiles=profiles,
             project_root=project_root,
             remote_path=remote_path,
             ssh=ssh,
@@ -290,6 +344,33 @@ class CLIConfig:
     def check_ssh(self, msg: str = "SSH configuration is required for this command."):
         if self.ssh is None:
             error_and_exit(msg)
+
+    def load_profile(self, name: str):
+        if name not in self.profiles:
+            error_and_exit(f"Profile '{name}' not found in config.")
+
+        profile = self.profiles[name]
+
+        if "history_path" in profile:
+            self.history_path = CLIConfig.load_history_path(profile, self.project_root)
+
+        if "install" in profile:
+            install = InstallConfig.validate(profile["install"])
+            self.install = dataclasses.replace(self.install, **install)
+
+        if "modules" in profile:
+            self.modules = profile["modules"]
+
+        if "remote_path" in profile:
+            self.remote_path = profile["remote_path"]
+
+        if "ssh" in profile:
+            ssh = SSHConfig.validate(profile["ssh"])
+            self.ssh = dataclasses.replace(self.ssh, **ssh)
+
+        if "submit" in profile:
+            submit = SubmitConfig.validate(profile["submit"], self.project_root)
+            self.submit = {**self.submit, **submit}
 
 
 cli_config = CLIConfig.load()

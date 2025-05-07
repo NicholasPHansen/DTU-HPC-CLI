@@ -35,6 +35,11 @@ __version__ = "1.2.0"
 cli = typer.Typer(pretty_exceptions_show_locals=False)
 
 
+def profile_callback(profile: str | None):
+    if profile is not None:
+        cli_config.load_profile(profile)
+
+
 def version_callback(value: bool):
     if value:
         typer.echo(__version__)
@@ -42,7 +47,12 @@ def version_callback(value: bool):
 
 
 @cli.callback()
-def main(version: Annotated[bool, typer.Option("--version", callback=version_callback)] = False):
+def main(
+    profile: Annotated[
+        str, typer.Option("--profile", callback=profile_callback, help="Optional profile from config.")
+    ] = None,
+    version: Annotated[bool, typer.Option("--version", callback=version_callback)] = False,
+):
     pass
 
 
@@ -294,13 +304,14 @@ def stats(
 
 class SubmitDefault:
     def __init__(self, key: str):
-        self.value = cli_config.submit.get(key)
+        self.key = key
 
     def __call__(self):
-        return self.value
+        return cli_config.submit.get(self.key)
 
     def __str__(self):
-        return str(self.value)
+        value = cli_config.submit.get(self.key)
+        return str(value)
 
 
 @cli.command()
