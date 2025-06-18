@@ -169,11 +169,12 @@ class SubmitConfig:
     @classmethod
     def load(cls, config: dict, project_root: Path):
         if "submit" not in config:
-            return cls.defaults()
+            submit = cls.defaults()
+        else:
+            submit = config["submit"]
+            submit = {key.replace("-", "_"): value for key, value in submit.items()}
+            submit = {**cls.defaults(), **submit}
 
-        submit = config["submit"]
-        submit = {key.replace("-", "_"): value for key, value in submit.items()}
-        submit = {**cls.defaults(), **submit}
         submit = cls.validate(submit, project_root)
 
         return submit
