@@ -30,7 +30,7 @@ from dtu_hpc_cli.sync import execute_sync
 from dtu_hpc_cli.types import Memory
 from dtu_hpc_cli.types import Time
 
-__version__ = "1.3.1"
+__version__ = "1.4.0"
 
 cli = typer.Typer(pretty_exceptions_show_locals=False)
 

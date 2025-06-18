@@ -1,6 +1,10 @@
 # Changelogs
 
-## v.1.3.1
+## v1.4.0
+
+
+
+## v1.3.1
 
 Bug fixes:
 * general: upgraded typer to 0.15.4 to [fix incompatibility with click 8.2.0](https://github.com/fastapi/typer/discussions/1215)
