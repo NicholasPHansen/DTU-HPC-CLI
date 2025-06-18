@@ -3,6 +3,7 @@
 ## v.1.3.1
 
 Bug fixes:
+* general: upgraded typer to 0.15.4 to [fix incompatibility with click 8.2.0](https://github.com/fastapi/typer/discussions/1215)
 * submit: active branch would not get inserted when "submit" was missing in the config
 
 ## v1.3.0
