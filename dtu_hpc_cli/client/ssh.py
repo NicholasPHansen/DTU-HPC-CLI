@@ -33,6 +33,19 @@ class SSHClient(Client):
         sftp = self.client.sftp()
         sftp.remove(path)
 
+    def exists(self, path):
+        sftp = self.client.sftp()
+        try:
+            sftp.stat(path)
+            return True
+        except FileNotFoundError:
+            return False
+
+    def load(self, path: str) -> str:
+        sftp = self.client.sftp()
+        with sftp.file(path, "r") as f:
+            return f.read().decode("utf-8")
+
     def save(self, path: str, contents: str):
         sftp = self.client.sftp()
         with sftp.file(path, "w") as f:

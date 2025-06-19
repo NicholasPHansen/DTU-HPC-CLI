@@ -24,5 +24,13 @@ class Client(abc.ABC):
         pass
 
     @abc.abstractmethod
+    def exists(self, path: str) -> bool:
+        pass
+
+    @abc.abstractmethod
+    def load(self, path: str) -> str:
+        pass
+
+    @abc.abstractmethod
     def save(self, path: str, contents: str):
         pass

@@ -32,6 +32,13 @@ class LocalClient(Client):
     def remove(self, path: str):
         os.remove(path)
 
+    def exists(self, path):
+        return os.path.exists(path)
+
+    def load(self, path: str) -> str:
+        with open(path, "r") as f:
+            return f.read()
+
     def save(self, path: str, contents: str):
         with open(path, "w") as f:
             f.write(contents)
