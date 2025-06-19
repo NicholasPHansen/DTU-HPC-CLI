@@ -15,6 +15,7 @@ from dtu_hpc_cli.install import execute_install
 from dtu_hpc_cli.jobs import JobsConfig
 from dtu_hpc_cli.jobs import JobsStats
 from dtu_hpc_cli.jobs import execute_jobs
+from dtu_hpc_cli.open_output import execute_open_output
 from dtu_hpc_cli.queues import execute_queues
 from dtu_hpc_cli.remove import RemoveConfig
 from dtu_hpc_cli.remove import execute_remove
@@ -204,6 +205,12 @@ def jobs(
     """List running and pending jobs."""
     list_config = JobsConfig(node=node, queue=queue, stats=stats)
     execute_jobs(list_config)
+
+
+@cli.command()
+def open_output(job_id: str):
+    """Show the job output in your editor."""
+    execute_open_output(job_id)
 
 
 @cli.command()

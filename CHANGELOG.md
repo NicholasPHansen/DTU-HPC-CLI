@@ -2,7 +2,8 @@
 
 ## v1.4.0
 
-
+New commands:
+* open-output: Show the output log of a given job ID.
 
 ## v1.3.1
 
