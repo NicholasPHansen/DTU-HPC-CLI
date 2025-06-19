@@ -3,7 +3,8 @@
 ## v1.4.0
 
 New commands:
-* open-output: Show the output log of a given job ID.
+* open-error: Show the error log of a given job ID in your default text editor.
+* open-output: Show the output log of a given job ID in your default text editor.
 
 ## v1.3.1
 
