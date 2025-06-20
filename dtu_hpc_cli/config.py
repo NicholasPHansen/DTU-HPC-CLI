@@ -8,6 +8,8 @@ from git import Repo
 from dtu_hpc_cli.constants import CONFIG_FILENAME
 from dtu_hpc_cli.constants import HISTORY_FILENAME
 from dtu_hpc_cli.error import error_and_exit
+from dtu_hpc_cli.types import Date
+from dtu_hpc_cli.types import Duration
 from dtu_hpc_cli.types import Memory
 from dtu_hpc_cli.types import Time
 
@@ -140,11 +142,12 @@ class SubmitConfig:
     output: str | None
     queue: str
     preamble: list[str]
-    split_every: Time
+    split_every: Duration
     start_after: str | None
     sync: bool
-    walltime: Time
-    datetime: str | None = None
+    walltime: Duration
+    date: Date | None = None
+    time: Time | None = None
 
     @classmethod
     def defaults(cls):
@@ -153,7 +156,7 @@ class SubmitConfig:
             "commands": [],
             "confirm": True,
             "cores": 4,
-            "datetime": None,
+            "date": None,
             "feature": None,
             "error": None,
             "gpus": None,
@@ -167,6 +170,7 @@ class SubmitConfig:
             "split_every": "1d",
             "start_after": None,
             "sync": True,
+            "time": None,
             "walltime": "1d",
         }
 
@@ -206,7 +210,7 @@ class SubmitConfig:
             "commands": self.commands,
             "confirm": self.confirm,
             "cores": self.cores,
-            "datetime": self.datetime,
+            "date": str(self.date) if self.date is not None else None,
             "feature": self.feature,
             "error": self.error,
             "gpus": self.gpus,
@@ -220,6 +224,7 @@ class SubmitConfig:
             "split_every": str(self.split_every),
             "start_after": self.start_after,
             "sync": self.sync,
+            "time": str(self.time) if self.time is not None else None,
             "walltime": str(self.walltime),
         }
 
@@ -230,7 +235,7 @@ class SubmitConfig:
             commands=data["commands"],
             confirm=data.get("confirm", True),
             cores=data["cores"],
-            datetime=data.get("datetime", None),
+            date=Date.parse(data["date"]) if "date" in data else None,
             feature=data["feature"],
             error=data["error"],
             gpus=data["gpus"],
@@ -241,10 +246,11 @@ class SubmitConfig:
             output=data["output"],
             queue=data["queue"],
             preamble=data["preamble"],
-            split_every=Time.parse(data["split_every"]),
+            split_every=Duration.parse(data["split_every"]),
             start_after=data["start_after"],
             sync=data.get("sync", True),
-            walltime=Time.parse(data["walltime"]),
+            time=Time.parse(data["time"]) if "time" in data else None,
+            walltime=Duration.parse(data["walltime"]),
         )
 
 

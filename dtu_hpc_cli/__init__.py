@@ -29,6 +29,8 @@ from dtu_hpc_cli.stats import StatsConfig
 from dtu_hpc_cli.stats import execute_stats
 from dtu_hpc_cli.submit import execute_submit
 from dtu_hpc_cli.sync import execute_sync
+from dtu_hpc_cli.types import Date
+from dtu_hpc_cli.types import Duration
 from dtu_hpc_cli.types import Memory
 from dtu_hpc_cli.types import Time
 
@@ -96,6 +98,9 @@ def history(
     cores_below: int | None = None,
     cores_is: int | None = None,
     date: bool = True,
+    date_after: Annotated[Date, typer.Option(parser=Date.parse)] = None,
+    date_before: Annotated[Date, typer.Option(parser=Date.parse)] = None,
+    date_is: Annotated[Date, typer.Option(parser=Date.parse)] = None,
     feature: bool = False,
     feature_contains: str | None = None,
     feature_is: str | None = None,
@@ -131,18 +136,21 @@ def history(
     preamble_contains: str | None = None,
     preamble_is: str | None = None,
     split_every: bool = False,
-    split_every_above: Annotated[Time, typer.Option(parser=Time.parse)] = None,
-    split_every_below: Annotated[Time, typer.Option(parser=Time.parse)] = None,
-    split_every_is: Annotated[Time, typer.Option(parser=Time.parse)] = None,
+    split_every_above: Annotated[Duration, typer.Option(parser=Duration.parse)] = None,
+    split_every_below: Annotated[Duration, typer.Option(parser=Duration.parse)] = None,
+    split_every_is: Annotated[Duration, typer.Option(parser=Duration.parse)] = None,
     start_after: bool = False,
     start_after_contains: str | None = None,
     start_after_is: str | None = None,
     sync: bool = False,
     time: bool = True,
+    time_after: Annotated[Time, typer.Option(parser=Time.parse)] = None,
+    time_before: Annotated[Time, typer.Option(parser=Time.parse)] = None,
+    time_is: Annotated[Time, typer.Option(parser=Time.parse)] = None,
     walltime: bool = True,
-    walltime_above: Annotated[Time, typer.Option(parser=Time.parse)] = None,
-    walltime_below: Annotated[Time, typer.Option(parser=Time.parse)] = None,
-    walltime_is: Annotated[Time, typer.Option(parser=Time.parse)] = None,
+    walltime_above: Annotated[Duration, typer.Option(parser=Duration.parse)] = None,
+    walltime_below: Annotated[Duration, typer.Option(parser=Duration.parse)] = None,
+    walltime_is: Annotated[Duration, typer.Option(parser=Duration.parse)] = None,
 ):
     """Show the history of submitted jobs."""
     config = HistoryConfig(
@@ -158,6 +166,9 @@ def history(
         cores_below=cores_below,
         cores_is=cores_is,
         date=date,
+        date_after=date_after,
+        date_before=date_before,
+        date_is=date_is,
         feature=feature,
         feature_contains=feature_contains,
         feature_is=feature_is,
@@ -201,6 +212,9 @@ def history(
         start_after_is=start_after_is,
         sync=sync,
         time=time,
+        time_after=time_after,
+        time_before=time_before,
+        time_is=time_is,
         walltime=walltime,
         walltime_above=walltime_above,
         walltime_below=walltime_below,
@@ -268,10 +282,10 @@ def resubmit(
     output: str = None,
     preamble: List[str] = None,
     queue: str = None,
-    split_every: Annotated[Time, typer.Option(parser=Time.parse)] = None,
+    split_every: Annotated[Duration, typer.Option(parser=Duration.parse)] = None,
     start_after: str = None,
     sync: bool = None,
-    walltime: Annotated[Time, typer.Option(parser=Time.parse)] = None,
+    walltime: Annotated[Duration, typer.Option(parser=Duration.parse)] = None,
 ):
     """Resubmit a job. Optionally with new parameters."""
     config = ResubmitConfig(
@@ -352,10 +366,10 @@ def submit(
     output: Annotated[str, typer.Option(default_factory=SubmitDefault("output"))],
     preamble: Annotated[List[str], typer.Option(default_factory=SubmitDefault("preamble"))],
     queue: Annotated[str, typer.Option(default_factory=SubmitDefault("queue"))],
-    split_every: Annotated[Time, typer.Option(parser=Time.parse, default_factory=SubmitDefault("split_every"))],
+    split_every: Annotated[Duration, typer.Option(parser=Duration.parse, default_factory=SubmitDefault("split_every"))],
     start_after: Annotated[str, typer.Option(default_factory=SubmitDefault("start_after"))],
     sync: Annotated[bool, typer.Option(default_factory=SubmitDefault("sync"))],
-    walltime: Annotated[Time, typer.Option(parser=Time.parse, default_factory=SubmitDefault("walltime"))],
+    walltime: Annotated[Duration, typer.Option(parser=Duration.parse, default_factory=SubmitDefault("walltime"))],
 ):
     """Submit a job to the queue."""
     submit_config = SubmitConfig(

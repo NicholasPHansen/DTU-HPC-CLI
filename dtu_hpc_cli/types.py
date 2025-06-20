@@ -1,7 +1,153 @@
+import datetime
 import re
 from enum import StrEnum
 
 import typer
+
+
+class Date:
+    def __init__(self, date: datetime.date):
+        self.date = date
+
+    @classmethod
+    def parse(cls, date: str):
+        if len(date) == 0:
+            raise typer.BadParameter("Got empty string.")
+
+        try:
+            date = datetime.date.fromisoformat(date)
+        except ValueError as e:
+            raise typer.BadParameter(f"Invalid date format: {e}") from e
+
+        return cls(date)
+
+    def __str__(self):
+        return self.date.isoformat()
+
+    def __eq__(self, other: "Date"):
+        if not isinstance(other, Date):
+            return False
+        return self.date == other.date
+
+    def __lt__(self, other: "Memory"):
+        return self.date < other.date
+
+    def __gt__(self, other: "Memory"):
+        return self.date > other.date
+
+
+class Duration:
+    pattern = re.compile(r"(\d+d)?(\d+h)?(\d+m)?")
+
+    expected_format_msg = (
+        "Expected format: [days]d[hours]h[minutes]m\n" + "All parts are optional.\n" + "Example: 1d2h3m"
+    )
+
+    def __init__(self, days: int, hours: int, minutes: int):
+        self.days = days
+        self.hours = hours
+        self.minutes = minutes
+
+    @classmethod
+    def parse(cls, time: str):
+        if len(time) == 0:
+            raise typer.BadParameter("Got empty string.")
+
+        match = cls.pattern.fullmatch(time)
+
+        if match is None:
+            raise typer.BadParameter(f"Invalid format.\n{cls.expected_format_msg}")
+
+        days = match.group(1)
+        hours = match.group(2)
+        minutes = match.group(3)
+
+        if days is None:
+            days = 0
+        else:
+            days = int(days[:-1])
+
+        if hours is None:
+            hours = 0
+        else:
+            hours = int(hours[:-1])
+
+        if minutes is None:
+            minutes = 0
+        else:
+            minutes = int(minutes[:-1])
+
+        if minutes > 59:
+            raise typer.BadParameter("Minutes must be less than 60.")
+
+        if hours > 23:
+            raise typer.BadParameter("Hours must be less than 24.")
+
+        return cls(days, hours, minutes)
+
+    def is_zero(self) -> bool:
+        return self.days == 0 and self.hours == 0 and self.minutes == 0
+
+    def total_hours(self) -> int:
+        return self.days * 24 + self.hours
+
+    def __repr__(self):
+        return f"Time(days={self.days}, hours={self.hours}, minutes={self.minutes})"
+
+    def __str__(self):
+        return f"{self.days}d{self.hours:02d}h{self.minutes:02d}m"
+
+    def __add__(self, other: "Duration"):
+        days = self.days + other.days
+        hours = self.hours + other.hours
+        minutes = self.minutes + other.minutes
+
+        if minutes >= 60:
+            minutes -= 60
+            hours += 1
+
+        if hours >= 24:
+            hours -= 24
+            days += 1
+
+        return Duration(days, hours, minutes)
+
+    def __sub__(self, other: "Duration"):
+        if self < other:
+            return Duration(0, 0, 0)
+
+        days = self.days - other.days
+        hours = self.hours - other.hours
+        minutes = self.minutes - other.minutes
+
+        if minutes < 0:
+            minutes += 60
+            hours -= 1
+
+        if hours < 0:
+            hours += 24
+            days -= 1
+
+        return Duration(days, hours, minutes)
+
+    def __lt__(self, other: "Duration"):
+        return (
+            self.days < other.days
+            or (self.days == other.days and self.hours < other.hours)
+            or (self.days == other.days and self.hours == other.hours and self.minutes < other.minutes)
+        )
+
+    def __gt__(self, other: "Duration"):
+        return (
+            self.days > other.days
+            or (self.days == other.days and self.hours > other.hours)
+            or (self.days == other.days and self.hours == other.hours and self.minutes > other.minutes)
+        )
+
+    def __eq__(self, other: "Duration"):
+        if not isinstance(other, Duration):
+            return False
+        return self.days == other.days and self.hours == other.hours and self.minutes == other.minutes
 
 
 class MemoryUnit(StrEnum):
@@ -90,114 +236,31 @@ class Memory:
 
 
 class Time:
-    pattern = re.compile(r"(\d+d)?(\d+h)?(\d+m)?")
-
-    expected_format_msg = (
-        "Expected format: [days]d[hours]h[minutes]m\n" + "All parts are optional.\n" + "Example: 1d2h3m"
-    )
-
-    def __init__(self, days: int, hours: int, minutes: int):
-        self.days = days
-        self.hours = hours
-        self.minutes = minutes
+    def __init__(self, time: datetime.time):
+        self.time = time
 
     @classmethod
     def parse(cls, time: str):
         if len(time) == 0:
             raise typer.BadParameter("Got empty string.")
 
-        match = cls.pattern.fullmatch(time)
+        try:
+            time = datetime.time.fromisoformat(time)
+        except ValueError as e:
+            raise typer.BadParameter(f"Invalid time format: {e}") from e
 
-        if match is None:
-            raise typer.BadParameter(f"Invalid format.\n{cls.expected_format_msg}")
-
-        days = match.group(1)
-        hours = match.group(2)
-        minutes = match.group(3)
-
-        if days is None:
-            days = 0
-        else:
-            days = int(days[:-1])
-
-        if hours is None:
-            hours = 0
-        else:
-            hours = int(hours[:-1])
-
-        if minutes is None:
-            minutes = 0
-        else:
-            minutes = int(minutes[:-1])
-
-        if minutes > 59:
-            raise typer.BadParameter("Minutes must be less than 60.")
-
-        if hours > 23:
-            raise typer.BadParameter("Hours must be less than 24.")
-
-        return cls(days, hours, minutes)
-
-    def is_zero(self) -> bool:
-        return self.days == 0 and self.hours == 0 and self.minutes == 0
-
-    def total_hours(self) -> int:
-        return self.days * 24 + self.hours
-
-    def __repr__(self):
-        return f"Time(days={self.days}, hours={self.hours}, minutes={self.minutes})"
+        return cls(time)
 
     def __str__(self):
-        return f"{self.days}d{self.hours:02d}h{self.minutes:02d}m"
-
-    def __add__(self, other: "Time"):
-        days = self.days + other.days
-        hours = self.hours + other.hours
-        minutes = self.minutes + other.minutes
-
-        if minutes >= 60:
-            minutes -= 60
-            hours += 1
-
-        if hours >= 24:
-            hours -= 24
-            days += 1
-
-        return Time(days, hours, minutes)
-
-    def __sub__(self, other: "Time"):
-        if self < other:
-            return Time(0, 0, 0)
-
-        days = self.days - other.days
-        hours = self.hours - other.hours
-        minutes = self.minutes - other.minutes
-
-        if minutes < 0:
-            minutes += 60
-            hours -= 1
-
-        if hours < 0:
-            hours += 24
-            days -= 1
-
-        return Time(days, hours, minutes)
-
-    def __lt__(self, other: "Time"):
-        return (
-            self.days < other.days
-            or (self.days == other.days and self.hours < other.hours)
-            or (self.days == other.days and self.hours == other.hours and self.minutes < other.minutes)
-        )
-
-    def __gt__(self, other: "Time"):
-        return (
-            self.days > other.days
-            or (self.days == other.days and self.hours > other.hours)
-            or (self.days == other.days and self.hours == other.hours and self.minutes > other.minutes)
-        )
+        return self.time.isoformat("seconds")
 
     def __eq__(self, other: "Time"):
         if not isinstance(other, Time):
             return False
-        return self.days == other.days and self.hours == other.hours and self.minutes == other.minutes
+        return self.time == other.time
+
+    def __lt__(self, other: "Time"):
+        return self.time < other.time
+
+    def __gt__(self, other: "Time"):
+        return self.time > other.time

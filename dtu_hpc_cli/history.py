@@ -9,6 +9,8 @@ from rich.table import Table
 from dtu_hpc_cli.config import SubmitConfig
 from dtu_hpc_cli.config import cli_config
 from dtu_hpc_cli.error import error_and_exit
+from dtu_hpc_cli.types import Date
+from dtu_hpc_cli.types import Duration
 from dtu_hpc_cli.types import Memory
 from dtu_hpc_cli.types import Time
 
@@ -27,6 +29,9 @@ class HistoryConfig:
     cores_below: int | None
     cores_is: int | None
     date: bool
+    date_is: Date | None
+    date_before: Date | None
+    date_after: Date | None
     feature: bool
     feature_contains: str | None
     feature_is: str | None
@@ -62,18 +67,21 @@ class HistoryConfig:
     preamble_contains: str | None
     preamble_is: str | None
     split_every: bool
-    split_every_above: Time | None
-    split_every_below: Time | None
-    split_every_is: Time | None
+    split_every_above: Duration | None
+    split_every_below: Duration | None
+    split_every_is: Duration | None
     start_after: bool
     start_after_contains: str | None
     start_after_is: str | None
     sync: bool
     time: bool
+    time_is: Time | None
+    time_before: Time | None
+    time_after: Time | None
     walltime: bool
-    walltime_above: Time | None
-    walltime_below: Time | None
-    walltime_is: Time | None
+    walltime_above: Duration | None
+    walltime_below: Duration | None
+    walltime_is: Duration | None
 
 
 def execute_history(config: HistoryConfig):
@@ -85,6 +93,9 @@ def execute_history(config: HistoryConfig):
     history = filter_by_string(history, "branch", config.branch_contains, config.branch_is)
     history = filter_by_list_string(history, "commands", config.command_contains, config.command_is)
     history = filter_by_comparable(history, "cores", config.cores_above, config.cores_below, config.cores_is)
+    history = filter_by_parsable_comparable(
+        history, "date", Date.parse, config.date_after, config.date_before, config.date_is
+    )
     history = filter_by_list_string(history, "feature", config.feature_contains, config.feature_is)
     history = filter_by_string(history, "error", config.error_contains, config.error_is)
     history = filter_by_comparable(history, "gpus", config.gpus_above, config.gpus_below, config.gpus_is)
@@ -98,11 +109,19 @@ def execute_history(config: HistoryConfig):
     history = filter_by_string(history, "queue", config.queue_contains, config.queue_is)
     history = filter_by_list_string(history, "preamble", config.preamble_contains, config.preamble_is)
     history = filter_by_parsable_comparable(
-        history, "split_every", Time.parse, config.split_every_above, config.split_every_below, config.split_every_is
+        history,
+        "split_every",
+        Duration.parse,
+        config.split_every_above,
+        config.split_every_below,
+        config.split_every_is,
     )
     history = filter_by_string(history, "start_after", config.start_after_contains, config.start_after_is)
     history = filter_by_parsable_comparable(
-        history, "walltime", Time.parse, config.walltime_above, config.walltime_below, config.walltime_is
+        history, "time", Time.parse, config.time_after, config.time_before, config.time_is
+    )
+    history = filter_by_parsable_comparable(
+        history, "walltime", Duration.parse, config.walltime_above, config.walltime_below, config.walltime_is
     )
 
     if len(history) == 0:
@@ -116,9 +135,9 @@ def execute_history(config: HistoryConfig):
     if config.name:
         table.add_column("name")
     if config.date:
-        table.add_column("date", justify="right")
+        table.add_column("date")
     if config.time:
-        table.add_column("time", justify="right")
+        table.add_column("time")
     if config.queue:
         table.add_column("queue")
     if config.cores:
@@ -161,9 +180,9 @@ def execute_history(config: HistoryConfig):
         if config.name:
             row.append(values.name)
         if config.date:
-            row.append(values.datetime.split(" ")[0] if values.datetime is not None else "-")
+            row.append(str(values.date) if values.date is not None else "-")
         if config.time:
-            row.append(values.datetime.split(" ")[1] if values.datetime is not None else "-")
+            row.append(str(values.time) if values.time is not None else "-")
         if config.queue:
             row.append(values.queue)
         if config.cores:
@@ -236,9 +255,13 @@ def find_job(job_id: str) -> dict:
 
 def filter_by_string(history: list[dict], key: str, contains: str | None, equals: str | None) -> list[dict]:
     if contains is not None:
-        history = [entry for entry in history if entry["config"][key] is not None and contains in entry["config"][key]]
+        history = [
+            entry for entry in history if entry["config"].get(key) is not None and contains in entry["config"].get(key)
+        ]
     if equals is not None:
-        history = [entry for entry in history if entry["config"][key] is not None and entry["config"][key] == equals]
+        history = [
+            entry for entry in history if entry["config"].get(key) is not None and entry["config"].get(key) == equals
+        ]
     return history
 
 
@@ -247,13 +270,13 @@ def filter_by_list_string(history: list[dict], key: str, contains: str | None, e
         history = [
             entry
             for entry in history
-            if entry["config"][key] is not None and any(contains in value for value in entry["config"][key])
+            if entry["config"].get(key) is not None and any(contains in value for value in entry["config"].get(key))
         ]
     if equals is not None:
         history = [
             entry
             for entry in history
-            if entry["config"][key] is not None and any(value == equals for value in entry["config"][key])
+            if entry["config"].get(key) is not None and any(value == equals for value in entry["config"].get(key))
         ]
     return history
 
@@ -266,11 +289,17 @@ def filter_by_comparable(
     equals: int | None,
 ) -> list[dict]:
     if above is not None:
-        history = [entry for entry in history if entry["config"][key] is not None and entry["config"][key] > above]
+        history = [
+            entry for entry in history if entry["config"].get(key) is not None and entry["config"].get(key) > above
+        ]
     if below is not None:
-        history = [entry for entry in history if entry["config"][key] is not None and entry["config"][key] < below]
+        history = [
+            entry for entry in history if entry["config"].get(key) is not None and entry["config"].get(key) < below
+        ]
     if equals is not None:
-        history = [entry for entry in history if entry["config"][key] is not None and entry["config"][key] == equals]
+        history = [
+            entry for entry in history if entry["config"].get(key) is not None and entry["config"].get(key) == equals
+        ]
     return history
 
 
@@ -278,20 +307,26 @@ def filter_by_parsable_comparable(
     history: list[dict],
     key: str,
     parser: callable,
-    above: Time | Memory | None,
-    below: Time | Memory | None,
-    equals: Time | Memory | None,
+    above: Duration | Memory | None,
+    below: Duration | Memory | None,
+    equals: Duration | Memory | None,
 ) -> list[dict]:
     if above is not None:
         history = [
-            entry for entry in history if entry["config"][key] is not None and parser(entry["config"][key]) > above
+            entry
+            for entry in history
+            if entry["config"].get(key) is not None and parser(entry["config"].get(key)) > above
         ]
     if below is not None:
         history = [
-            entry for entry in history if entry["config"][key] is not None and parser(entry["config"][key]) < below
+            entry
+            for entry in history
+            if entry["config"].get(key) is not None and parser(entry["config"].get(key)) < below
         ]
     if equals is not None:
         history = [
-            entry for entry in history if entry["config"][key] is not None and parser(entry["config"][key]) == equals
+            entry
+            for entry in history
+            if entry["config"].get(key) is not None and parser(entry["config"].get(key)) == equals
         ]
     return history

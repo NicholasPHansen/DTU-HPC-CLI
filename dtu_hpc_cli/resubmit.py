@@ -1,8 +1,8 @@
 import dataclasses
 
+from dtu_hpc_cli.config import Duration
 from dtu_hpc_cli.config import Memory
 from dtu_hpc_cli.config import SubmitConfig
-from dtu_hpc_cli.config import Time
 from dtu_hpc_cli.history import find_job
 from dtu_hpc_cli.submit import execute_submit
 
@@ -25,10 +25,10 @@ class ResubmitConfig:
     output: str | None
     queue: str | None
     preamble: list[str]
-    split_every: Time | None
+    split_every: Duration | None
     start_after: str | None
     sync: bool | None
-    walltime: Time | None
+    walltime: Duration | None
 
 
 def execute_resubmit(config: ResubmitConfig):

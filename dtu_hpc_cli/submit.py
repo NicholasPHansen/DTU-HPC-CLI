@@ -14,6 +14,8 @@ from dtu_hpc_cli.error import error_and_exit
 from dtu_hpc_cli.history import add_to_history
 from dtu_hpc_cli.sync import check_and_confirm_changes
 from dtu_hpc_cli.sync import execute_sync
+from dtu_hpc_cli.types import Date
+from dtu_hpc_cli.types import Time
 
 JOB_ID_PATTERN = re.compile(r"Job <([\d]+)> is submitted to queue")
 
@@ -40,7 +42,8 @@ def execute_submit(submit_config: SubmitConfig):
     typer.echo("Submitting job...")
 
     # add date to the config for history
-    submit_config.datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    submit_config.date = Date(datetime.now().date())
+    submit_config.time = Time(datetime.now().time())
 
     if submit_config.walltime > submit_config.split_every:
         submit_multiple(submit_config)
