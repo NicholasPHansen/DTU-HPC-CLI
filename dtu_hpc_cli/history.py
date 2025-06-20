@@ -26,6 +26,7 @@ class HistoryConfig:
     cores_above: int | None
     cores_below: int | None
     cores_is: int | None
+    date: bool
     feature: bool
     feature_contains: str | None
     feature_is: str | None
@@ -68,6 +69,7 @@ class HistoryConfig:
     start_after_contains: str | None
     start_after_is: str | None
     sync: bool
+    time: bool
     walltime: bool
     walltime_above: Time | None
     walltime_below: Time | None
@@ -113,6 +115,10 @@ def execute_history(config: HistoryConfig):
     table.add_column("job ID(s)")
     if config.name:
         table.add_column("name")
+    if config.date:
+        table.add_column("date", justify="right")
+    if config.time:
+        table.add_column("time", justify="right")
     if config.queue:
         table.add_column("queue")
     if config.cores:
@@ -154,6 +160,10 @@ def execute_history(config: HistoryConfig):
         row = ["\n".join(job_ids)]
         if config.name:
             row.append(values.name)
+        if config.date:
+            row.append(values.datetime.split(" ")[0] if values.datetime is not None else "-")
+        if config.time:
+            row.append(values.datetime.split(" ")[1] if values.datetime is not None else "-")
         if config.queue:
             row.append(values.queue)
         if config.cores:

@@ -144,6 +144,7 @@ class SubmitConfig:
     start_after: str | None
     sync: bool
     walltime: Time
+    datetime: str | None = None
 
     @classmethod
     def defaults(cls):
@@ -152,6 +153,7 @@ class SubmitConfig:
             "commands": [],
             "confirm": True,
             "cores": 4,
+            "datetime": None,
             "feature": None,
             "error": None,
             "gpus": None,
@@ -204,6 +206,7 @@ class SubmitConfig:
             "commands": self.commands,
             "confirm": self.confirm,
             "cores": self.cores,
+            "datetime": self.datetime,
             "feature": self.feature,
             "error": self.error,
             "gpus": self.gpus,
@@ -227,6 +230,7 @@ class SubmitConfig:
             commands=data["commands"],
             confirm=data.get("confirm", True),
             cores=data["cores"],
+            datetime=data.get("datetime", None),
             feature=data["feature"],
             error=data["error"],
             gpus=data["gpus"],

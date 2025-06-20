@@ -6,6 +6,9 @@ New commands:
 * open-error: Show the error log of a given job ID in your default text editor.
 * open-output: Show the output log of a given job ID in your default text editor.
 
+History:
+* Display submission date and time
+
 Submit:
 * `--confirm / --no-confirm`: Show and confirm job script before submitting. Default to true.
 

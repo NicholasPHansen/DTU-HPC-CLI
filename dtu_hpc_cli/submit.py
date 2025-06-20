@@ -1,6 +1,7 @@
 import dataclasses
 import os
 import re
+from datetime import datetime
 from uuid import uuid4
 
 import typer
@@ -37,6 +38,9 @@ def execute_submit(submit_config: SubmitConfig):
         execute_sync(confirm_changes=False)
 
     typer.echo("Submitting job...")
+
+    # add date to the config for history
+    submit_config.datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     if submit_config.walltime > submit_config.split_every:
         submit_multiple(submit_config)
