@@ -46,6 +46,8 @@ You can call it using the `dtu` command, which has the these subcommands:
 * **history**: Shows a list of the jobs that you have submitted and the options/commands that you used.
 * **install**: Calls the installation commands in your configuration. NB. this command will install your project on the HPC - not on your local machine.
 * **list**: Shows a list of running and pending jobs. It calls `bstat` on the HPC.
+* **open-error**: Show the error log of a given job ID in your default text editor.
+* **open-output**: Show the output log of a given job ID in your default text editor.
 * **queues**: List all queues or show job statistics for a single queue. It calls `bqueues` or `classtat` on the HPC.
 * **remove**: Removes (kills) one or more running or pending jobs. It calls `bkill` on the HPC.
 * **resubmit**: Submits a job with the same options/commands as a previous job. Each option/command can optionally be overriden.
