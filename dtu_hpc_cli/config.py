@@ -128,6 +128,7 @@ class SSHConfig:
 class SubmitConfig:
     branch: str | None
     commands: list[str]
+    confirm: bool
     cores: int
     feature: list[str] | None
     error: str | None
@@ -149,6 +150,7 @@ class SubmitConfig:
         return {
             "branch": ACTIVE_BRANCH_KEY,
             "commands": [],
+            "confirm": True,
             "cores": 4,
             "feature": None,
             "error": None,
@@ -200,6 +202,7 @@ class SubmitConfig:
         return {
             "branch": self.branch,
             "commands": self.commands,
+            "confirm": self.confirm,
             "cores": self.cores,
             "feature": self.feature,
             "error": self.error,
@@ -222,6 +225,7 @@ class SubmitConfig:
         return cls(
             branch=data["branch"],
             commands=data["commands"],
+            confirm=data.get("confirm", True),
             cores=data["cores"],
             feature=data["feature"],
             error=data["error"],

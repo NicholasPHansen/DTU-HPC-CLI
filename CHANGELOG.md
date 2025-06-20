@@ -6,6 +6,15 @@ New commands:
 * open-error: Show the error log of a given job ID in your default text editor.
 * open-output: Show the output log of a given job ID in your default text editor.
 
+Submit:
+* `--confirm / --no-confirm`: Show and confirm job script before submitting. Default to true.
+
+Resubmit:
+* `--confirm / --no-confirm`: Show and confirm job script before resubmitting. Default to true.
+
+Bug fixes:
+* resubmit: `sync` would always be true regardless of the value in the history.
+
 ## v1.3.1
 
 Bug fixes:

@@ -13,6 +13,7 @@ class ResubmitConfig:
 
     branch: str | None
     commands: list[str] | None
+    confirm: bool | None
     cores: int | None
     feature: list[str] | None
     error: str | None

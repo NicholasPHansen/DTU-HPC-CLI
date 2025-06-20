@@ -37,6 +37,18 @@ __version__ = "1.4.0"
 cli = typer.Typer(pretty_exceptions_show_locals=False)
 
 
+class SubmitDefault:
+    def __init__(self, key: str):
+        self.key = key
+
+    def __call__(self):
+        return cli_config.submit.get(self.key)
+
+    def __str__(self):
+        value = cli_config.submit.get(self.key)
+        return str(value)
+
+
 def profile_callback(profile: str | None):
     if profile is not None:
         cli_config.load_profile(profile)
@@ -78,6 +90,7 @@ def history(
     commands: bool = True,
     command_contains: str | None = None,
     command_is: str | None = None,
+    confirm: bool = False,
     cores: bool = True,
     cores_above: int | None = None,
     cores_below: int | None = None,
@@ -137,6 +150,7 @@ def history(
         commands=commands,
         command_contains=command_contains,
         command_is=command_is,
+        confirm=confirm,
         cores=cores,
         cores_above=cores_above,
         cores_below=cores_below,
@@ -238,6 +252,7 @@ def resubmit(
     job_id: str,
     branch: str = None,
     command: List[str] = None,
+    confirm: bool = None,
     cores: int = None,
     error: str = None,
     feature: List[str] = None,
@@ -251,7 +266,7 @@ def resubmit(
     queue: str = None,
     split_every: Annotated[Time, typer.Option(parser=Time.parse)] = None,
     start_after: str = None,
-    sync: bool = True,
+    sync: bool = None,
     walltime: Annotated[Time, typer.Option(parser=Time.parse)] = None,
 ):
     """Resubmit a job. Optionally with new parameters."""
@@ -259,6 +274,7 @@ def resubmit(
         job_id=job_id,
         branch=branch,
         commands=command,
+        confirm=confirm,
         cores=cores,
         error=error,
         feature=feature,
@@ -316,23 +332,12 @@ def stats(
     execute_stats(config)
 
 
-class SubmitDefault:
-    def __init__(self, key: str):
-        self.key = key
-
-    def __call__(self):
-        return cli_config.submit.get(self.key)
-
-    def __str__(self):
-        value = cli_config.submit.get(self.key)
-        return str(value)
-
-
 @cli.command()
 def submit(
     commands: List[str],
     branch: Annotated[str, typer.Option(default_factory=SubmitDefault("branch"))],
     cores: Annotated[int, typer.Option(default_factory=SubmitDefault("cores"))],
+    confirm: Annotated[bool, typer.Option(default_factory=SubmitDefault("confirm"))],
     error: Annotated[str, typer.Option(default_factory=SubmitDefault("error"))],
     feature: Annotated[List[str], typer.Option(default_factory=SubmitDefault("feature"))],
     gpus: Annotated[int, typer.Option(default_factory=SubmitDefault("gpus"))],
@@ -350,8 +355,9 @@ def submit(
 ):
     """Submit a job to the queue."""
     submit_config = SubmitConfig(
-        commands=commands,
         branch=branch,
+        commands=commands,
+        confirm=confirm,
         cores=cores,
         error=error,
         feature=feature,

@@ -21,6 +21,7 @@ class HistoryConfig:
     commands: bool
     command_contains: str | None
     command_is: str | None
+    confirm: bool
     cores: bool
     cores_above: int | None
     cores_below: int | None
@@ -136,6 +137,8 @@ def execute_history(config: HistoryConfig):
         table.add_column("split_every")
     if config.start_after:
         table.add_column("start_after")
+    if config.confirm:
+        table.add_column("confirm")
     if config.sync:
         table.add_column("sync")
     if config.branch:
@@ -179,6 +182,8 @@ def execute_history(config: HistoryConfig):
             row.append(str(values.split_every))
         if config.start_after:
             row.append(values.start_after if values.start_after is not None else "-")
+        if config.confirm:
+            row.append("yes" if values.confirm else "no")
         if config.sync:
             row.append("yes" if values.sync else "no")
         if config.branch:

@@ -23,14 +23,15 @@ def execute_submit(submit_config: SubmitConfig):
 
     if submit_config.walltime > submit_config.split_every:
         typer.echo(
-            f"NB. This will result in multiple jobs as the split time is '{submit_config.split_every}' "
+            f"This will result in multiple jobs as the split time is '{submit_config.split_every}' "
             + f"and the walltime '{submit_config.walltime}' exceeds that limit."
         )
 
     script = create_job_script(submit_config)
-    typer.echo("Job script:")
-    typer.echo(f"\n{script}\n")
-    typer.confirm("Submit job (enter to submit)?", default=True, abort=True)
+    if submit_config.confirm:
+        typer.echo("Job script:")
+        typer.echo(f"\n{script}\n")
+        typer.confirm("Submit job (enter to submit)?", default=True, abort=True)
 
     if submit_config.sync:
         execute_sync(confirm_changes=False)

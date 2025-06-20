@@ -218,6 +218,7 @@ Provide your own default settings for any of the *submit* options:
         "commands": [
             "python my_script.py"
         ],
+        "confirm": true,
         "cores": 4,
         "feature": [
             "gpu32gb"
@@ -291,6 +292,7 @@ Here is a complete example for a configuration that customizes everything:
         "commands": [
             "python my_script.py"
         ],
+        "confirm": true,
         "cores": 4,
         "feature": [
             "gpu32gb"
