@@ -11,6 +11,9 @@ get-command:
 * Fix: List options (e.g. `--feature`) will now be shown as `--feature f1 --feature f2` instead of as `--feature ['f1', 'f2']`.
 * Fix: `date` and `time` is no longer shown as the submit command automatically adds these.
 
+open-error / open-output:
+* Fix: Could not open logs from job that was split into multiple subjobs due to walltime being greater than split time.
+
 resubmit:
 * Fix: Adding `--confirm` or `--no-confirm` will now override the option from the resubmitted job. 
 

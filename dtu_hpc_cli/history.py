@@ -253,6 +253,17 @@ def find_job(job_id: str) -> dict:
     error_and_exit(f"Job '{job_id}' not found in history.")
 
 
+def find_job_and_sub_id(job_id: str) -> tuple[dict, int]:
+    history = load_history()
+    for entry in history:
+        sub_id = 1
+        for jid in entry["job_ids"]:
+            if jid == job_id:
+                return entry["config"], sub_id
+            sub_id += 1
+    error_and_exit(f"Job '{job_id}' not found in history.")
+
+
 def filter_by_string(history: list[dict], key: str, contains: str | None, equals: str | None) -> list[dict]:
     if contains is not None:
         history = [
