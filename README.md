@@ -252,14 +252,18 @@ Use profiles to easily change between different configurations in the same proje
 {
     "profiles": {
         "cpu": {
-            "queue": "hpc",
-            "cores": 4,
-            "memory": "5GB"
+            "submit": {
+                "queue": "hpc",
+                "cores": 4,
+                "memory": "5GB"
+            }
         },
         "gpu": {
-            "queue": "gpuv100",
-            "cores": 8,
-            "memory": "10GB"
+            "submit": {
+                "queue": "gpuv100",
+                "cores": 8,
+                "memory": "10GB"
+            }
         }
     }
 }
@@ -313,14 +317,18 @@ Here is a complete example for a configuration that customizes everything:
     },
     "profiles": {
         "cpu": {
-            "queue": "hpc",
-            "cores": 4,
-            "memory": "5GB"
+            "submit": {
+                "queue": "hpc",
+                "cores": 4,
+                "memory": "5GB"
+            }
         },
         "gpu": {
-            "queue": "gpuv100",
-            "cores": 8,
-            "memory": "10GB"
+            "submit": {
+                "queue": "gpuv100",
+                "cores": 8,
+                "memory": "10GB"
+            }
         }
     }
 }

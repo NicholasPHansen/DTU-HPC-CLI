@@ -4,6 +4,7 @@
 
 Bug fixes:
 * Will now check for `hostname` (instead of `host`) when validating SSH configs.
+* Fixed issue where profiles examples in README were formatted incorrectly.
 
 ## v1.4.0
 
