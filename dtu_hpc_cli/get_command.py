@@ -2,6 +2,9 @@ import typer
 
 from dtu_hpc_cli.history import find_job
 
+# These are automatically added fields that are not part of the submit command
+INVALID_FIELDS = {"date", "time"}
+
 
 def execute_get_command(job_id: str):
     config = find_job(job_id)
@@ -9,8 +12,11 @@ def execute_get_command(job_id: str):
     preamble = config.pop("preamble", [])
     submit_commands = config.pop("commands", [])
 
+    keys = sorted(set(config.keys()) - INVALID_FIELDS)
+
     command = ["dtu submit"]
-    for key, value in config.items():
+    for key in keys:
+        value = config[key]
         if value is None or (isinstance(value, list) and len(value) == 0):
             continue
         key = key.replace("_", "-")
