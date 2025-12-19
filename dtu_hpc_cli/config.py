@@ -103,7 +103,7 @@ class SSHConfig:
 
         output = {}
 
-        hostname = config.get("host")
+        hostname = config.get("hostname")
         if hostname is not None:
             if not isinstance(hostname, str):
                 error_and_exit(f"Invalid type for host option in ssh config. Expected string but got {type(hostname)}.")
