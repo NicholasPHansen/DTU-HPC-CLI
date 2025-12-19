@@ -45,7 +45,7 @@ You can call it using the `dtu` command, which has the these subcommands:
 * **get-options**: Print options from a previously submitted job.
 * **history**: Shows a list of the jobs that you have submitted and the options/commands that you used.
 * **install**: Calls the installation commands in your configuration. NB. this command will install your project on the HPC - not on your local machine.
-* **list**: Shows a list of running and pending jobs. It calls `bstat` on the HPC.
+* **jobs**: Shows a list of running and pending jobs. It calls `bstat` on the HPC.
 * **open-error**: Show the error log of a given job ID in your default text editor.
 * **open-output**: Show the output log of a given job ID in your default text editor.
 * **queues**: List all queues or show job statistics for a single queue. It calls `bqueues` or `classtat` on the HPC.
@@ -115,7 +115,7 @@ A typical workflow will look like this:
 4. Check that job is queued.
 
     ``` txt
-    > dtu list
+    > dtu jobs
 
     JOBID      USER    QUEUE      JOB_NAME   NALLOC STAT  START_TIME      ELAPSED
     22862150   [user]  hpc        test            0 PEND       -          0:00:00

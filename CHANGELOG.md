@@ -5,6 +5,7 @@
 Bug fixes:
 * Will now check for `hostname` (instead of `host`) when validating SSH configs.
 * Fixed issue where profiles examples in README were formatted incorrectly.
+* Replaced instances of `dtu list` with `dtu jobs` in README.
 
 ## v1.4.0
 
