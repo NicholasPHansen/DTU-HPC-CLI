@@ -19,6 +19,9 @@ def execute_get_command(job_id: str):
                 command.append(f"--{key}")
             else:
                 command.append(f"--no-{key}")
+        elif isinstance(value, list):
+            for v in value:
+                command.append(f"--{key} {v}")
         else:
             command.append(f"--{key} {value}")
 

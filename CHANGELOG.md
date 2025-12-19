@@ -2,10 +2,13 @@
 
 ## v1.4.1
 
-Bug fixes:
+General fixes:
 * Will now check for `hostname` (instead of `host`) when validating SSH configs.
 * Fixed issue where profiles examples in README were formatted incorrectly.
 * Replaced instances of `dtu list` with `dtu jobs` in README.
+
+get-command:
+* Fix: List options (e.g. `--feature`) will now be shown as `--feature f1 --feature f2` instead of as `--feature ['f1', 'f2']`.
 
 ## v1.4.0
 
