@@ -2,6 +2,9 @@
 
 ## v1.4.1
 
+Bug fixes:
+* Will now check for `hostname` (instead of `host`) when validating SSH configs.
+
 ## v1.4.0
 
 New commands:
