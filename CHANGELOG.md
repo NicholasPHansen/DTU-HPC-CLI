@@ -11,6 +11,9 @@ get-command:
 * Fix: List options (e.g. `--feature`) will now be shown as `--feature f1 --feature f2` instead of as `--feature ['f1', 'f2']`.
 * Fix: `date` and `time` is no longer shown as the submit command automatically adds these.
 
+resubmit:
+* Fix: Adding `--confirm` or `--no-confirm` will now override the option from the resubmitted job. 
+
 ## v1.4.0
 
 New commands:

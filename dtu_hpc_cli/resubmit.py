@@ -38,6 +38,7 @@ def execute_resubmit(config: ResubmitConfig):
     replacements = {
         "branch": config.branch,
         "commands": config.commands,
+        "confirm": config.confirm,
         "cores": config.cores,
         "feature": config.feature,
         "error": config.error,
