@@ -34,7 +34,7 @@ from dtu_hpc_cli.types import Duration
 from dtu_hpc_cli.types import Memory
 from dtu_hpc_cli.types import Time
 
-__version__ = "1.4.0"
+__version__ = "1.4.1"
 
 cli = typer.Typer(pretty_exceptions_show_locals=False)
 
