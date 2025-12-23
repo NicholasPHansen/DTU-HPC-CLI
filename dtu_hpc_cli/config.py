@@ -46,10 +46,10 @@ class DockerConfig:
         output = {}
 
         compose_file = config.get("compose_file")
-        if hostname is not None:
+        if compose_file is not None:
             if not isinstance(compose_file, str):
                 error_and_exit(f"Invalid type for compose_file option in docker config. Expected string but got {type(compose_file)}.")
-            output["compose_file"] = compatibility
+            output["compose_file"] = compose_file 
 
         return output
 
