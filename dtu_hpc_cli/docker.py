@@ -18,7 +18,7 @@ def build_compose_file():
         progress.update(task, completed=True)
 
 
-def run_docker_container(service: str = "trainer"):
+def run_docker_container():
     docker = cli_config.docker
     arguments = ["docker", "compose", "-f", f"{docker.compose_file}", "up", "-d" ]
     with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}")) as progress:

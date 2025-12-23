@@ -397,12 +397,12 @@ def submit(
 
 
 @cli.command()
-def docker(build: bool = False, run: bool = False, service: str = "trainer"):
+def docker(build: bool = False, run: bool = False):
     """Builds the docker images on the remote machine"""
     if build:
         build_compose_file()
     if run:
-        run_docker_container(service)
+        run_docker_container()
 
 
 @cli.command()
