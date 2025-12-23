@@ -19,6 +19,40 @@ DEFAULT_HOSTNAME = "login1.hpc.dtu.dk"
 
 DEFAULT_SUBMIT_BRANCH = "main"
 
+@dataclasses.dataclass
+class DockerConfig:
+    compose_file: str
+#    dockerfile: str
+#    volumes: list[str]
+#    devices: list[str]
+#    gpus: str
+
+    @classmethod
+    def load(cls, config: dict):
+        if "docker" not in config:
+            return None
+
+        docker = config["docker"]
+        if "compose_file" not in docker:
+            error_and_exit('"compose_file" not found in docker config.')
+
+        return cls(**docker)
+
+    @classmethod
+    def validate(cls, config: dict) -> dict:
+        if not isinstance(config, dict):
+            error_and_exit(f"Invalid type for ssh option in config. Expected dictionary but got {type(config)}.")
+
+        output = {}
+
+        compose_file = config.get("compose_file")
+        if hostname is not None:
+            if not isinstance(compose_file, str):
+                error_and_exit(f"Invalid type for compose_file option in docker config. Expected string but got {type(compose_file)}.")
+            output["compose_file"] = compatibility
+
+        return output
+
 
 @dataclasses.dataclass
 class InstallConfig:
@@ -264,6 +298,7 @@ class CLIConfig:
     profiles: dict | None
     ssh: SSHConfig | None
     submit: SubmitConfig | None
+    docker: DockerConfig | None
 
     @classmethod
     def load(cls):
@@ -293,6 +328,7 @@ class CLIConfig:
         remote_path = cls.load_remote_path(config, project_root)
         ssh = SSHConfig.load(config)
         submit = SubmitConfig.load(config, project_root)
+        docker = DockerConfig.load(config)
 
         return cls(
             history_path=history_path,
@@ -303,6 +339,7 @@ class CLIConfig:
             remote_path=remote_path,
             ssh=ssh,
             submit=submit,
+            docker=docker
         )
 
     @classmethod

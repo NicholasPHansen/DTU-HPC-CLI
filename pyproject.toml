@@ -6,9 +6,11 @@ name = "dtu-hpc-cli"
 readme = "README.md"
 repository = "https://github.com/ChrisFugl/DTU-HPC-CLI"
 version = "1.4.1"
+c3698 (Add docker compose functionality)
 
 [project]
 name = "dtu-hpc-cli"
+version = "1.5.0"
 
 [project.urls]
 Changelog = "https://github.com/ChrisFugl/DTU-HPC-CLI/CHANGELOG.md"

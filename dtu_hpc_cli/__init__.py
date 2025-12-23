@@ -6,6 +6,7 @@ from typing_extensions import Annotated
 from dtu_hpc_cli.config import SubmitConfig
 from dtu_hpc_cli.config import cli_config
 from dtu_hpc_cli.constants import CONFIG_FILENAME
+from dtu_hpc_cli.docker import build_compose_file, run_docker_container
 from dtu_hpc_cli.get_command import execute_get_command
 from dtu_hpc_cli.get_options import Option
 from dtu_hpc_cli.get_options import execute_get_options
@@ -396,6 +397,15 @@ def submit(
 
 
 @cli.command()
+def docker(build: bool = False, run: bool = False, service: str = "trainer"):
+    """Builds the docker images on the remote machine"""
+    if build:
+        build_compose_file()
+    if run:
+        run_docker_container(service)
+
+
+@cli.command()
 def sync():
     """Sync the local directory with the remote directory on the HPC."""
     cli_config.check_ssh(msg=f"Sync requires a SSH configuration in '{CONFIG_FILENAME}'.")
@@ -404,3 +414,4 @@ def sync():
 
 if __name__ == "__main__":
     cli()
+
