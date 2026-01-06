@@ -12,7 +12,8 @@ from dtu_hpc_cli.sync import execute_sync
 
 def execute_docker_command(command: str):
     if command == "stats":
-        run_docker_container(docker_config)
+        run_docker_ps(docker_config)
+        return
 
     if cli_config.docker.sync:
         check_and_confirm_changes()
@@ -23,8 +24,6 @@ def execute_docker_command(command: str):
         run_docker_build(docker_config)
     elif command == "run":
         run_docker_container(docker_config)
-    elif command == "stats":
-        run_docker_ps()
     else:
         error_and_exit(f"Unknown command '{command}'.")
 
