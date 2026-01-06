@@ -19,13 +19,21 @@ DEFAULT_HOSTNAME = "login1.hpc.dtu.dk"
 
 DEFAULT_SUBMIT_BRANCH = "main"
 
+
+@dataclasses.dataclass
+class DockerVolumesConfig:
+    hostpath: str
+    containerpath: str
+    permissions: str
+
+
 @dataclasses.dataclass
 class DockerConfig:
-    compose_file: str
-#    dockerfile: str
-#    volumes: list[str]
-#    devices: list[str]
-#    gpus: str
+    dockerfile: str
+    imagename: str
+    volumes: list[DockerVolumesConfig]
+    gpus: str
+    sync: bool
 
     @classmethod
     def load(cls, config: dict):
@@ -33,8 +41,20 @@ class DockerConfig:
             return None
 
         docker = config["docker"]
-        if "compose_file" not in docker:
-            error_and_exit('"compose_file" not found in docker config.')
+        if "dockerfile" not in docker:
+            error_and_exit('"dockerfile" not found in docker config.')
+
+        if "volumes" not in docker:
+            error_and_exit('"volumes" not found in docker config.')
+
+        if "imagename" not in docker:
+            error_and_exit('"imagename" not found in docker config.')
+
+        if "gpus" not in docker:
+            docker["gpus"] = None
+
+        if "sync" not in docker:
+            docker["sync"] = True
 
         return cls(**docker)
 
@@ -45,12 +65,37 @@ class DockerConfig:
 
         output = {}
 
-        compose_file = config.get("compose_file")
-        if compose_file is not None:
-            if not isinstance(compose_file, str):
-                error_and_exit(f"Invalid type for compose_file option in docker config. Expected string but got {type(compose_file)}.")
-            output["compose_file"] = compose_file 
+        dockerfile = config.get("dockerfile")
+        if dockerfile is not None:
+            if not isinstance(dockerfile, str):
+                error_and_exit(
+                    f"Invalid type for compose_file option in docker config. Expected string but got {type(dockerfile)}."
+                )
+            output["dockerfile"] = dockerfile
 
+        imagename = config.get("imagename")
+        if imagename is not None:
+            if not isinstance(imagename, str):
+                error_and_exit(
+                    f"Invalid type for compose_file option in docker config. Expected string but got {type(imagename)}."
+                )
+            output["imagename"] = imagename
+
+        volumes = config.get("volumes")
+        if volumes is not None:
+            if not isinstance(volumes, str):
+                error_and_exit(
+                    f"Invalid type for compose_file option in docker config. Expected string but got {type(volumes)}."
+                )
+            output["volumes"] = volumes
+
+        gpus = config.get("gpus")
+        if gpus is not None:
+            if not isinstance(volumes, str):
+                error_and_exit(
+                    f"Invalid type for compose_file option in docker config. Expected string but got {type(volumes)}."
+                )
+            output["volumes"] = volumes
         return output
 
 
@@ -339,7 +384,7 @@ class CLIConfig:
             remote_path=remote_path,
             ssh=ssh,
             submit=submit,
-            docker=docker
+            docker=docker,
         )
 
     @classmethod
@@ -395,6 +440,10 @@ class CLIConfig:
 
     def check_ssh(self, msg: str = "SSH configuration is required for this command."):
         if self.ssh is None:
+            error_and_exit(msg)
+
+    def check_docker(self, msg: str = "Docker configuration is required for this command"):
+        if self.docker is None:
             error_and_exit(msg)
 
     def load_profile(self, name: str):

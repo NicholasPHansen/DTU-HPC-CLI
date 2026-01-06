@@ -6,7 +6,7 @@ from typing_extensions import Annotated
 from dtu_hpc_cli.config import SubmitConfig
 from dtu_hpc_cli.config import cli_config
 from dtu_hpc_cli.constants import CONFIG_FILENAME
-from dtu_hpc_cli.docker import build_compose_file, run_docker_container
+from dtu_hpc_cli.docker import execute_docker_command
 from dtu_hpc_cli.get_command import execute_get_command
 from dtu_hpc_cli.get_options import Option
 from dtu_hpc_cli.get_options import execute_get_options
@@ -397,12 +397,10 @@ def submit(
 
 
 @cli.command()
-def docker(build: bool = False, run: bool = False):
+def docker(command: str):
     """Builds the docker images on the remote machine"""
-    if build:
-        build_compose_file()
-    if run:
-        run_docker_container()
+    cli_config.check_docker(msg=f"docker requires a Docker configuration in '{CONFIG_FILENAME}'")
+    execute_docker_command(command)
 
 
 @cli.command()
@@ -414,4 +412,3 @@ def sync():
 
 if __name__ == "__main__":
     cli()
-
