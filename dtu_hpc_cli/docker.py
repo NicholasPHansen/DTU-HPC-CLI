@@ -12,7 +12,7 @@ from dtu_hpc_cli.sync import execute_sync
 
 def execute_docker_command(command: str):
     if command == "stats":
-        run_docker_ps(docker_config)
+        run_docker_ps()
         return
 
     if cli_config.docker.sync:
