@@ -95,7 +95,10 @@ class DockerConfig:
                 error_and_exit(
                     f"Invalid type for compose_file option in docker config. Expected string but got {type(volumes)}."
                 )
-            output["volumes"] = volumes
+            output["volumes"] = [
+                DockerVolumesConfig(hostpath=v.hostpath, containerpath=v.containerpath, permissions=v.permissions)
+                for v in volumes
+            ]
         return output
 
 

@@ -3,7 +3,7 @@ from typing import List
 import typer
 from typing_extensions import Annotated
 
-from dtu_hpc_cli.config import SubmitConfig
+from dtu_hpc_cli.config import SubmitConfig, DockerConfig, DockerVolumesConfig
 from dtu_hpc_cli.config import cli_config
 from dtu_hpc_cli.constants import CONFIG_FILENAME
 from dtu_hpc_cli.docker import execute_docker_command
@@ -49,6 +49,18 @@ class SubmitDefault:
 
     def __str__(self):
         value = cli_config.submit.get(self.key)
+        return str(value)
+
+
+class DockerDefault:
+    def __init__(self, key: str):
+        self.key = key
+
+    def __call__(self):
+        return cli_config.docker.get(self.key)
+
+    def __str__(self):
+        value = cli_config.docker.get(self.key)
         return str(value)
 
 
@@ -397,10 +409,19 @@ def submit(
 
 
 @cli.command()
-def docker(command: str):
+def docker(
+    commands: List[str],
+    sync: bool = True,
+    # volumes: Annotated[List[str], typer.Option(default_factory=DockerDefault("volumes"))],
+    # gpus: Annotated[str, typer.Option(default_factory=DockerDefault("gpus"))],
+    # sync: Annotated[bool, typer.Option(default_factory=DockerDefault("sync"))],
+    # imagename: Annotated[str, typer.Option(default_factory=DockerDefault("imagename"))],
+    # dockerfile: Annotated[str, typer.Option(default_factory=DockerDefault("dockerfile"))],
+):
     """Builds the docker images on the remote machine"""
     cli_config.check_docker(msg=f"docker requires a Docker configuration in '{CONFIG_FILENAME}'")
-    execute_docker_command(command)
+    config = cli_config.docker
+    execute_docker_command(config, commands, sync)
 
 
 @cli.command()
