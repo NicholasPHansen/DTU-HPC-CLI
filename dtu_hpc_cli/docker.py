@@ -72,7 +72,6 @@ def run_docker_container(config: DockerConfig, arguments: List[str]):
             *arguments,
         ]
     )
-    typer.echo(cmd)
 
     with get_client() as client:
         with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}")) as progress:
