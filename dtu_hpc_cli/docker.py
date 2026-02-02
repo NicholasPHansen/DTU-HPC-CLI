@@ -107,7 +107,7 @@ def execute_docker_command(config: DockerConfig, commands: List[str], sync: bool
     docker_config = cli_config.docker
     if docker_cmd == "build":
         run_docker_build(docker_config, arguments)
-    elif docker_cmd == "run":
+    elif docker_cmd == "submit":
         run_docker_container(docker_config, arguments)
     else:
         error_and_exit(f"Unknown command '{docker_cmd}'.")
