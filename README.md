@@ -1,4 +1,5 @@
 # DTU HPC CLI
+
 CLI for working with the High Performance Cluster (HPC) at the Technical University of Denmark (DTU). This CLI is a wrapper around the tools provided by the HPC to make it easier to run and manage jobs. See the [HPC documentation](https://www.hpc.dtu.dk) for more information.
 
 - [DTU HPC CLI](#dtu-hpc-cli)
@@ -14,14 +15,14 @@ CLI for working with the High Performance Cluster (HPC) at the Technical Univers
     - [Remote Location](#remote-location)
     - [Submit](#submit)
     - [Profiles](#profiles)
+    - [Docker](#docker)
     - [Complete Configuration](#complete-configuration)
-
 
 ## Requirements
 
-* Python v3.10+
-* git v1.7.0+
-* rsync
+- Python v3.10+
+- git v1.7.0+
+- rsync
 
 git is required because we assume that you use git for branching. The CLI can use this to get your active branch, so your submitted jobs will run from that branch.
 
@@ -41,20 +42,21 @@ You will also need to create a configuration in your project. See [Configuration
 
 You can call it using the `dtu` command, which has the these subcommands:
 
-* **get-command**: Get the command used to submit a previous job.
-* **get-options**: Print options from a previously submitted job.
-* **history**: Shows a list of the jobs that you have submitted and the options/commands that you used.
-* **install**: Calls the installation commands in your configuration. NB. this command will install your project on the HPC - not on your local machine.
-* **jobs**: Shows a list of running and pending jobs. It calls `bstat` on the HPC.
-* **open-error**: Show the error log of a given job ID in your default text editor.
-* **open-output**: Show the output log of a given job ID in your default text editor.
-* **queues**: List all queues or show job statistics for a single queue. It calls `bqueues` or `classtat` on the HPC.
-* **remove**: Removes (kills) one or more running or pending jobs. It calls `bkill` on the HPC.
-* **resubmit**: Submits a job with the same options/commands as a previous job. Each option/command can optionally be overriden.
-* **run**: Run one or more commands on the HPC. Uses the configured remote path as the working directory.
-* **stats**: Shows stats about a queue. It calls `nodestat` on the HPC.
-* **submit**: Submits a job to the HPC. Calls `bsub` on the HPC. NB. This command will automatically split a job into multiple jobs that run after each other when the walltime exceeds 24 hours. This is done because HPC limits GPU jobs to this duration. You can use the `--split-every` option to change duration at which jobs should be split.
-* **sync**: Synchronizes your local project with the project on the HPC. Requires that you have the `rsync` command. NB. It ignores everything in `.gitignore`.
+- **get-command**: Get the command used to submit a previous job.
+- **get-options**: Print options from a previously submitted job.
+- **history**: Shows a list of the jobs that you have submitted and the options/commands that you used.
+- **install**: Calls the installation commands in your configuration. NB. this command will install your project on the HPC - not on your local machine.
+- **jobs**: Shows a list of running and pending jobs. It calls `bstat` on the HPC.
+- **open-error**: Show the error log of a given job ID in your default text editor.
+- **open-output**: Show the output log of a given job ID in your default text editor.
+- **queues**: List all queues or show job statistics for a single queue. It calls `bqueues` or `classtat` on the HPC.
+- **remove**: Removes (kills) one or more running or pending jobs. It calls `bkill` on the HPC.
+- **resubmit**: Submits a job with the same options/commands as a previous job. Each option/command can optionally be overriden.
+- **run**: Run one or more commands on the HPC. Uses the configured remote path as the working directory.
+- **stats**: Shows stats about a queue. It calls `nodestat` on the HPC.
+- **submit**: Submits a job to the HPC. Calls `bsub` on the HPC. NB. This command will automatically split a job into multiple jobs that run after each other when the walltime exceeds 24 hours. This is done because HPC limits GPU jobs to this duration. You can use the `--split-every` option to change duration at which jobs should be split.
+- **sync**: Synchronizes your local project with the project on the HPC. Requires that you have the `rsync` command. NB. It ignores everything in `.gitignore`.
+- **docker**: Build and run Docker containers a remote machine. This command allows you to work with Docker images and containers directly on a remote machine.
 
 All commands will work out of the box on the HPC (except for `sync`). However, a big advantage of this tool is that you can call it from your local machine as well. You will need to [configure SSH](#ssh) for this to work.
 
@@ -195,6 +197,7 @@ The tool needs to know the location of your project on the HPC. The location def
 ```
 
 ### Submit
+
 The submit command has many options and you may want to provide sensible defaults for your specific application. Call `dtu submit --help` to see the existing defaults.
 
 Any of the options can be given a custom default. As such, both of the options below are valid configurations for *submit*.
@@ -269,6 +272,45 @@ Use profiles to easily change between different configurations in the same proje
 }
 ```
 
+### Docker
+
+NOTE: This is NOT usable on the HPC(!) as the HPC does not have docker.
+
+The `docker` command requires that you provide Docker configuration in your `.dtu_hpc.json` file. This includes settings for building and running containers on remote machine.
+
+``` json
+{
+    "docker": {
+        "dockerfile": "Dockerfile",
+        "imagename": "my-image",
+        "volumes": [
+            {
+                "hostpath": "/local/path",
+                "containerpath": "/container/path",
+                "permissions": "rw"
+            }
+        ],
+        "gpus": "all",
+        "sync": true
+    }
+}
+```
+
+All options in the Docker configuration are optional, which means it can be as simple as this:
+
+``` json
+{
+    "docker": {
+        "dockerfile": "Dockerfile",
+        "imagename": "my-image"
+    }
+}
+```
+
+**NB.** The `docker` command requires that you have Docker installed on the remote machine and that it's accessible from your SSH session.
+
+**NB.** The `docker logs` functionality requires containers to be run with the `--log-driver=journald` option to properly capture logs.
+
 ### Complete Configuration
 
 Here is a complete example for a configuration that customizes everything:
@@ -333,3 +375,4 @@ Here is a complete example for a configuration that customizes everything:
     }
 }
 ```
+
