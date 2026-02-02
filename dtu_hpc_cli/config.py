@@ -203,7 +203,7 @@ class SSHConfig:
                 error_and_exit(
                     f"Invalid type for identityfile option in ssh config. Expected string but got {type(identityfile)}."
                 )
-            output["identityfile"] = identityfile
+            output["identityfile"] = str(Path(identityfile).expanduser())
 
         return output
 
