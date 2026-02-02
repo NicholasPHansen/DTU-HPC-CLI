@@ -16,6 +16,9 @@ def execute_docker_command(config: DockerConfig, commands: List[str], sync: bool
     if docker_cmd == "stats":
         run_docker_ps()
         return
+    elif docker_cmd == "logs":
+        run_docker_logs(config)
+        return
 
     if sync:
         check_and_confirm_changes()
@@ -34,6 +37,13 @@ def run_docker_ps():
     with get_client() as client:
         cmd = "docker ps"
         returncode, stdout = client.run(cmd, cwd=cli_config.remote_path)
+
+
+def run_docker_logs(config: DockerConfig):
+    cmd = " ".join(["journalctl", f"CONTAINER_NAME={config.imagename}"])
+    with get_client() as client:
+        returncode, stdout = client.run(cmd, cwd=cli_config.remote_path)
+    typer.echo(stdout)
 
 
 def run_docker_build(config: DockerConfig, arguments: List[str]):
@@ -65,7 +75,10 @@ def run_docker_container(config: DockerConfig, arguments: List[str]):
         [
             "docker",
             "run",
+            "--log-driver=journald",
             "--rm",
+            "-d",
+            f"--name {config.imagename}",
             *volumes,
             *gpus,
             config.imagename,
@@ -82,4 +95,4 @@ def run_docker_container(config: DockerConfig, arguments: List[str]):
 
     if returncode != 0:
         error_and_exit(f"Submission command failed with return code {returncode}.")
-    typer.echo(stdout)
+    # typer.echo(stdout)
