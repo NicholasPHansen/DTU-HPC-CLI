@@ -75,7 +75,7 @@ def show_docker_history():
         volumes = "\n".join([f"{v['hostpath']}:{v['containerpath']}:{v['permissions']}" for v in _config["volumes"]])
 
         imagename = _config["imagename"]
-        arguments = _config["arguments"]
+        arguments = " ".join(_config["arguments"])
 
         row = [str(timestamp), container_id, dockerfile, gpus, volumes, imagename, *arguments]
 
