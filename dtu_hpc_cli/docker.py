@@ -43,7 +43,6 @@ def run_docker_logs(config: DockerConfig):
     cmd = " ".join(["journalctl", f"CONTAINER_NAME={config.imagename}"])
     with get_client() as client:
         returncode, stdout = client.run(cmd, cwd=cli_config.remote_path)
-    typer.echo(stdout)
 
 
 def run_docker_build(config: DockerConfig, arguments: List[str]):
