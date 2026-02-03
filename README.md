@@ -135,6 +135,8 @@ All options in the configuration are optional, which means it can be as simple a
 
 However, we highly recommend to at least configure SSH to be able to manage jobs from your local machine.
 
+**Note**: When using the `dtu docker logs` command to read job logs, the remote user should be a member of either the `adm` or `systemd-journal` groups in order to correctly read the logs.
+
 See all options in [the complete example at the end](#complete-configuration).
 
 ### SSH

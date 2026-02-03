@@ -92,7 +92,7 @@ def run_docker_ps(config: DockerConfig, arguments: List[str]):
 
 
 def run_docker_logs(config: DockerConfig, arguments: List[str]):
-    cmd = ["journalctl", f"CONTAINER_NAME={config.imagename}", "-o cat"]
+    cmd = ["journalctl", f"IMAGE_NAME={config.imagename}", "-o cat", "--all"]
 
     if len(arguments) == 0:
         # no arguments given, so just pull the logs for the latest run container
@@ -135,7 +135,7 @@ def run_stop_docker_container(config: DockerConfig, arguments: List[str]):
     else:
         error_and_exit("Argument is not a container id string")
 
-    cmd = " ".join(["docker", "container", "stop", f"{config.imagename}"])
+    cmd = " ".join(["docker", "container", "stop", f"{container_id}"])
     with get_client() as client:
         with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}")) as progress:
             task = progress.add_task(description="Stopping Container", total=None)
@@ -177,7 +177,7 @@ def run_docker_container(config: DockerConfig, arguments: List[str]):
             "--log-driver=journald",
             "--rm",
             "-d",
-            f"--name {config.imagename}",
+            # f"--name {config.imagename}",
             *volumes,
             *gpus,
             config.imagename,
