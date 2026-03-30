@@ -5,19 +5,17 @@ from pathlib import Path
 from typing import List
 
 import typer
-from rich.progress import Console
+from rich.console import Console
 from rich.progress import Progress
 from rich.progress import SpinnerColumn
-from rich.progress import Table
 from rich.progress import TextColumn
+from rich.table import Table
 
 from dtu_hpc_cli.client import get_client
 from dtu_hpc_cli.config import DockerConfig
 from dtu_hpc_cli.config import cli_config
 from dtu_hpc_cli.error import error_and_exit
-from dtu_hpc_cli.sync import check_and_confirm_changes
 from dtu_hpc_cli.sync import execute_sync
-from dtu_hpc_cli.types import Date
 
 DOCKER_HISTORY_FILE = Path(".dtu_docker_history.json")
 
@@ -34,24 +32,24 @@ def save_history(history: list[dict]):
     path.write_text(json.dumps(history))
 
 
-def add_to_history(config: DockerConfig, container_id: str, arguments: List[str]):
+def add_to_history(config: DockerConfig, container_id: str, commands: List[str]):
     history = load_history()
-
     _d = {
         "dockerfile": config.dockerfile,
         "gpus": config.gpus,
         "volumes": config.volumes,
         "imagename": config.imagename,
-        "arguments": arguments,
+        "commands": commands,
     }
     history.append({"config": _d, "container_id": container_id, "timestamp": time.time()})
     save_history(history)
 
 
-def show_docker_history(config: DockerConfig, arguments: List[str]):
-    if not Path(DOCKER_HISTORY_FILE).exists():
-        typer.echo(f"No history found in '{cli_config.history_path}'. You might not have submitted any jobs yet.")
-        exit(0)
+def execute_docker_history(config: DockerConfig):
+    """Show history of past Docker runs."""
+    if not DOCKER_HISTORY_FILE.exists():
+        typer.echo(f"No history found in '{DOCKER_HISTORY_FILE}'. You might not have submitted any jobs yet.")
+        return
 
     history = load_history()
 
@@ -67,108 +65,116 @@ def show_docker_history(config: DockerConfig, arguments: List[str]):
     for entry in history:
         timestamp = datetime.fromtimestamp(entry["timestamp"]).strftime("%Y-%m-%d %H:%M:%S")
         container_id = entry["container_id"]
-
         _config = entry["config"]
         dockerfile = _config["dockerfile"]
         gpus = _config["gpus"] if _config["gpus"] else "-"
         volumes = "\n".join([f"{v['hostpath']}:{v['containerpath']}:{v['permissions']}" for v in _config["volumes"]])
-
         imagename = _config["imagename"]
-        arguments = " ".join(_config["arguments"])
-
-        row = [str(timestamp), container_id, dockerfile, gpus, volumes, imagename, arguments]
-
-        # table.add_row([timestamp, container_id, dockerfile, gpus, volumes, imagename, arguments])
-        table.add_row(*row)
+        # support both old "arguments" key and new "commands" key
+        cmds = _config.get("commands") or _config.get("arguments") or []
+        commands_str = " ".join(cmds)
+        table.add_row(str(timestamp), container_id, dockerfile, gpus, volumes, imagename, commands_str)
 
     console = Console()
     console.print(table)
 
 
-def run_docker_ps(config: DockerConfig, arguments: List[str]):
+def execute_docker_stats(config: DockerConfig):
+    """List running containers (docker ps)."""
     with get_client() as client:
-        cmd = "docker ps"
-        returncode, stdout = client.run(cmd, cwd=cli_config.remote_path)
+        client.run("docker ps", cwd=cli_config.remote_path)
 
 
-def run_docker_logs(config: DockerConfig, arguments: List[str]):
-    cmd = ["journalctl", f"IMAGE_NAME={config.imagename}", "-o cat", "--all"]
+def execute_docker_logs(
+    config: DockerConfig, *, container_id: str | None, imagename: str | None, all: bool, n: int | None
+):
+    """Show logs from a container."""
+    imagename = imagename or config.imagename
+    cmd = ["journalctl", f"IMAGE_NAME={imagename}", "-o cat", "--all"]
 
-    if len(arguments) == 0:
-        # no arguments given, so just pull the logs for the latest run container
-        history = load_history()
-        container_id = history[-1]["container_id"]
+    if container_id is not None:
+        if len(container_id) != 12:
+            error_and_exit(f"Expected 12-character container ID, got: {container_id}")
         cmd.append(f"CONTAINER_ID={container_id}")
-
-    else:
-        if "a" in arguments:
-            get_all_logs = True
-            typer.echo("Pulling logs for all previously run containers...")
-
-        if "n" in arguments:
-            idx = arguments.index("n")
-            get_n_logs = arguments[idx + 1]
-            if not get_n_logs.isdigit():
-                error_and_exit(f"Got unexpected argument for 'n': {get_n_logs}")
-            cmd.append(f"-n {get_n_logs}")
-
-        if "i" in arguments:
-            idx = arguments.index("i")
-            container_id = arguments[idx + 1]
-            if len(container_id) != 12:
-                error_and_exit(f"Expected 12 digit hash for argument for 'i', got: {container_id}")
-            cmd.append(f"CONTAINER_ID={container_id}")
-
-    cmd = " ".join(cmd)
-
-    with get_client() as client:
-        returncode, stdout = client.run(cmd, cwd=cli_config.remote_path)
-
-
-def run_stop_docker_container(config: DockerConfig, arguments: List[str]):
-    if len(arguments) == 0:
+    elif not all:
         history = load_history()
+        if not history:
+            error_and_exit("No container history found. Provide --container-id or use --all.")
+        cmd.append(f"CONTAINER_ID={history[-1]['container_id']}")
+
+    if n is not None:
+        cmd.append(f"-n {n}")
+
+    with get_client() as client:
+        client.run(" ".join(cmd), cwd=cli_config.remote_path)
+
+
+def execute_docker_stop(config: DockerConfig, *, container_id: str | None):
+    """Stop a running container."""
+    if container_id is None:
+        history = load_history()
+        if not history:
+            error_and_exit("No container history found. Provide --container-id.")
         container_id = history[-1]["container_id"]
-    elif len(arguments[0]) == 12:
-        # Provided a container_id
-        container_id = arguments[0]
-    else:
-        error_and_exit("Argument is not a container id string")
 
-    cmd = " ".join(["docker", "container", "stop", f"{container_id}"])
+    if len(container_id) != 12:
+        error_and_exit(f"Expected 12-character container ID, got: {container_id}")
+
+    cmd = f"docker container stop {container_id}"
     with get_client() as client:
         with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}")) as progress:
-            task = progress.add_task(description="Stopping Container", total=None)
-            progress.start()
-            returncode, stdout = client.run(cmd, cwd=cli_config.remote_path)
+            task = progress.add_task(description="Stopping container", total=None)
+            returncode, _ = client.run(cmd, cwd=cli_config.remote_path)
             progress.update(task, completed=True)
 
     if returncode != 0:
-        error_and_exit(f"Submission command failed with return code {returncode}.")
+        error_and_exit(f"Stop command failed with return code {returncode}.")
 
 
-def run_docker_build(config: DockerConfig, arguments: List[str]):
-    cmd = " ".join(["docker", "build", f"-f {config.dockerfile}", *arguments, f"-t {config.imagename}", "."])
+def execute_docker_build(config: DockerConfig, sync: bool, dockerfile: str | None = None, imagename: str | None = None):
+    """Build the Docker image."""
+    if sync:
+        execute_sync(confirm_changes=True)
+
+    dockerfile = dockerfile or config.dockerfile
+    imagename = imagename or config.imagename
+    cmd = f"docker build -f {dockerfile} -t {imagename} ."
     with get_client() as client:
         with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}")) as progress:
-            task = progress.add_task(description="Building Container", total=None)
-            progress.start()
-            returncode, stdout = client.run(cmd, cwd=cli_config.remote_path)
+            task = progress.add_task(description="Building image", total=None)
+            returncode, _ = client.run(cmd, cwd=cli_config.remote_path)
             progress.update(task, completed=True)
 
     if returncode != 0:
-        error_and_exit(f"Submission command failed with return code {returncode}.")
+        error_and_exit(f"Build command failed with return code {returncode}.")
 
 
-def run_docker_container(config: DockerConfig, arguments: List[str]):
-    run_docker_build(config, [])
+def execute_docker_submit(
+    config: DockerConfig,
+    commands: List[str],
+    sync: bool,
+    dockerfile: str | None = None,
+    imagename: str | None = None,
+    gpus: str | None = None,
+):
+    """Build the image and run a container with the given command(s)."""
+    dockerfile = dockerfile or config.dockerfile
+    imagename = imagename or config.imagename
+    gpus = gpus if gpus is not None else config.gpus
+
+    execute_docker_build(config, sync, dockerfile=dockerfile, imagename=imagename)
+
     volumes = []
     if config.volumes is not None:
         volumes = [f"-v {v['hostpath']}:{v['containerpath']}:{v['permissions']}" for v in config.volumes]
 
-    gpus = []
-    if config.gpus is not None:
-        gpus = [f"--gpus {config.gpus}"]
+    gpu_flags = []
+    if gpus is not None:
+        gpu_flags = [f"--gpus {gpus}"]
+
+    ports = []
+    if config.ports is not None:
+        ports = [f"-p {mapping}" for mapping in config.ports]
 
     cmd = " ".join(
         [
@@ -177,72 +183,22 @@ def run_docker_container(config: DockerConfig, arguments: List[str]):
             "--log-driver=journald",
             "--rm",
             "-d",
-            # f"--name {config.imagename}",
             *volumes,
-            *gpus,
-            config.imagename,
-            *arguments,
+            *gpu_flags,
+            *ports,
+            imagename,
+            *commands,
         ]
     )
 
     with get_client() as client:
         with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}")) as progress:
-            task = progress.add_task(description="Starting Container", total=None)
-            progress.start()
+            task = progress.add_task(description="Starting container", total=None)
             returncode, stdout = client.run(cmd, cwd=cli_config.remote_path)
             progress.update(task, completed=True)
 
     if returncode != 0:
-        error_and_exit(f"Submission command failed with return code {returncode}.")
+        error_and_exit(f"Run command failed with return code {returncode}.")
 
-    # Grab the container id for history, only save the first 12 values of the hash
     container_id = stdout[:12]
-    add_to_history(config, container_id, arguments)
-    # typer.echo(stdout)
-
-
-def execute_docker_command(config: DockerConfig, commands: List[str], sync: bool):
-    docker_cmd = commands[0]
-    arguments = commands[1:]
-
-    docker_config = cli_config.docker
-    valid_commands = {
-        "stats": run_docker_ps,
-        "logs": run_docker_logs,
-        "history": show_docker_history,
-        "stop": run_stop_docker_container,
-        # "build": run_docker_build,
-        "submit": run_docker_container,
-    }
-
-    if docker_cmd not in valid_commands:
-        error_and_exit(f"Unknown command '{docker_cmd}'.")
-
-    fn = valid_commands.get(docker_cmd)
-    if (docker_cmd == "build" or docker_cmd == "submit") and sync:
-        execute_sync(confirm_changes=True)
-
-    fn(config, arguments)
-
-    # if docker_cmd == "stats":
-    #     run_docker_ps()
-    #     return
-    # elif docker_cmd == "logs":
-    #     run_docker_logs(config, arguments)
-    #     return
-    # elif docker_cmd == "history":
-    #     show_docker_history()
-    #     return
-    # elif docker_cmd == "stop":
-    #     run_stop_docker_container(docker_config, arguments)
-    #     return
-    #
-    # if sync:
-    #     execute_sync(confirm_changes=True)
-    #
-    # if docker_cmd == "build":
-    #     run_docker_build(docker_config, arguments)
-    # elif docker_cmd == "submit":
-    #     run_docker_container(docker_config, arguments)
-    # else:
-    #     error_and_exit(f"Unknown command '{docker_cmd}'.")
+    add_to_history(config, container_id, commands)

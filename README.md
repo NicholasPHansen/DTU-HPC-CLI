@@ -56,7 +56,13 @@ You can call it using the `dtu` command, which has the these subcommands:
 - **stats**: Shows stats about a queue. It calls `nodestat` on the HPC.
 - **submit**: Submits a job to the HPC. Calls `bsub` on the HPC. NB. This command will automatically split a job into multiple jobs that run after each other when the walltime exceeds 24 hours. This is done because HPC limits GPU jobs to this duration. You can use the `--split-every` option to change duration at which jobs should be split.
 - **sync**: Synchronizes your local project with the project on the HPC. Requires that you have the `rsync` command. NB. It ignores everything in `.gitignore`.
-- **docker**: Build and run Docker containers a remote machine. This command allows you to work with Docker images and containers directly on a remote machine.
+- **docker**: Build and run Docker containers on a remote machine. This is a command group with the following subcommands:
+  - **docker submit**: Build the image and run a container with the given command(s). Supports `--dockerfile`, `--imagename`, `--gpus`, and `--sync/--no-sync` overrides.
+  - **docker build**: Build the Docker image without running it. Supports `--dockerfile`, `--imagename`, and `--sync/--no-sync` overrides.
+  - **docker logs**: Show logs from a container (defaults to last run). Supports `--imagename`, `--container-id`, `--all`, and `--n` options.
+  - **docker stop**: Stop a running container (defaults to last run). Supports `--container-id`.
+  - **docker stats**: List running containers (`docker ps`).
+  - **docker history**: Show history of past Docker runs.
 
 All commands will work out of the box on the HPC (except for `sync`). However, a big advantage of this tool is that you can call it from your local machine as well. You will need to [configure SSH](#ssh) for this to work.
 
@@ -134,8 +140,6 @@ All options in the configuration are optional, which means it can be as simple a
 ```
 
 However, we highly recommend to at least configure SSH to be able to manage jobs from your local machine.
-
-**Note**: When using the `dtu docker logs` command to read job logs, the remote user should be a member of either the `adm` or `systemd-journal` groups in order to correctly read the logs.
 
 See all options in [the complete example at the end](#complete-configuration).
 
@@ -278,7 +282,7 @@ Use profiles to easily change between different configurations in the same proje
 
 NOTE: This is NOT usable on the HPC(!) as the HPC does not have docker.
 
-The `docker` command requires that you provide Docker configuration in your `.dtu_hpc.json` file. This includes settings for building and running containers on remote machine.
+The `docker` command group requires that you provide Docker configuration in your `.dtu_hpc.json` file. This includes settings for building and running containers on a remote machine.
 
 ``` json
 {
@@ -292,13 +296,14 @@ The `docker` command requires that you provide Docker configuration in your `.dt
                 "permissions": "rw"
             }
         ],
+        "ports": ["8080:80"],
         "gpus": "all",
         "sync": true
     }
 }
 ```
 
-All options in the Docker configuration are optional, which means it can be as simple as this:
+The minimum required configuration is:
 
 ``` json
 {
@@ -309,9 +314,20 @@ All options in the Docker configuration are optional, which means it can be as s
 }
 ```
 
+The `dockerfile`, `imagename`, `gpus`, and `sync` options serve as defaults that can be overridden per-invocation via CLI flags. For example:
+
+``` txt
+> dtu docker submit --gpus all 'python train.py --epochs 10'
+> dtu docker build --dockerfile Dockerfile.dev --imagename my-image-dev
+> dtu docker logs --n 50
+> dtu docker stop
+```
+
+Use `dtu docker --help` to see all available subcommands, and `dtu docker <subcommand> --help` for the options of each subcommand.
+
 **NB.** The `docker` command requires that you have Docker installed on the remote machine and that it's accessible from your SSH session.
 
-**NB.** The `docker logs` functionality requires containers to be run with the `--log-driver=journald` option to properly capture logs.
+**NB.** The `docker logs` functionality requires containers to be run with the `--log-driver=journald` option to properly capture logs. The remote user should be a member of either the `adm` or `systemd-journal` groups to read logs.
 
 ### Complete Configuration
 
@@ -358,6 +374,20 @@ Here is a complete example for a configuration that customizes everything:
         "start_after": "12345678",
         "sync": true,
         "walltime": "1d"
+    },
+    "docker": {
+        "dockerfile": "Dockerfile",
+        "imagename": "my-image",
+        "volumes": [
+            {
+                "hostpath": "/local/data",
+                "containerpath": "/data",
+                "permissions": "rw"
+            }
+        ],
+        "ports": ["8080:80"],
+        "gpus": "all",
+        "sync": true
     },
     "profiles": {
         "cpu": {

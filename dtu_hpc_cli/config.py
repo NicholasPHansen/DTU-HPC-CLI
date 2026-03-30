@@ -32,6 +32,7 @@ class DockerConfig:
     dockerfile: str
     imagename: str
     volumes: list[DockerVolumesConfig]
+    ports: list[str]
     gpus: str
     sync: bool
 
@@ -52,6 +53,9 @@ class DockerConfig:
 
         if "gpus" not in docker:
             docker["gpus"] = None
+
+        if "ports" not in docker:
+            docker["ports"] = None
 
         if "sync" not in docker:
             docker["sync"] = True
@@ -89,15 +93,23 @@ class DockerConfig:
                 )
             output["volumes"] = volumes
 
+        ports = config.get("ports")
+        if ports is not None:
+            if not isinstance(ports, str):
+                error_and_exit(
+                    f"Invalid type for compose_file option in docker config. Expected string but got {type(ports)}."
+                )
+            output["ports"] = ports
+
         gpus = config.get("gpus")
         if gpus is not None:
-            if not isinstance(volumes, str):
+            if not isinstance(gpus, str):
                 error_and_exit(
-                    f"Invalid type for compose_file option in docker config. Expected string but got {type(volumes)}."
+                    f"Invalid type for compose_file option in docker config. Expected string but got {type(gpus)}."
                 )
-            output["volumes"] = [
+            output["gpus"] = [
                 DockerVolumesConfig(hostpath=v.hostpath, containerpath=v.containerpath, permissions=v.permissions)
-                for v in volumes
+                for gpu in gpus
             ]
         return output
 

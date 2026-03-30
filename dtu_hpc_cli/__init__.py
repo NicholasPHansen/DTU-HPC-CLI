@@ -3,10 +3,15 @@ from typing import List
 import typer
 from typing_extensions import Annotated
 
-from dtu_hpc_cli.config import SubmitConfig, DockerConfig, DockerVolumesConfig
+from dtu_hpc_cli.config import SubmitConfig
 from dtu_hpc_cli.config import cli_config
 from dtu_hpc_cli.constants import CONFIG_FILENAME
-from dtu_hpc_cli.docker import execute_docker_command
+from dtu_hpc_cli.docker import execute_docker_build
+from dtu_hpc_cli.docker import execute_docker_history
+from dtu_hpc_cli.docker import execute_docker_logs
+from dtu_hpc_cli.docker import execute_docker_stats
+from dtu_hpc_cli.docker import execute_docker_stop
+from dtu_hpc_cli.docker import execute_docker_submit
 from dtu_hpc_cli.get_command import execute_get_command
 from dtu_hpc_cli.get_options import Option
 from dtu_hpc_cli.get_options import execute_get_options
@@ -39,6 +44,9 @@ __version__ = "1.4.1"
 
 cli = typer.Typer(pretty_exceptions_show_locals=False)
 
+docker_app = typer.Typer(help="Manage Docker containers on the remote (or local) machine.")
+cli.add_typer(docker_app, name="docker")
+
 
 class SubmitDefault:
     def __init__(self, key: str):
@@ -57,10 +65,10 @@ class DockerDefault:
         self.key = key
 
     def __call__(self):
-        return cli_config.docker.get(self.key)
+        return getattr(cli_config.docker, self.key, None)
 
     def __str__(self):
-        value = cli_config.docker.get(self.key)
+        value = getattr(cli_config.docker, self.key, None)
         return str(value)
 
 
@@ -408,20 +416,60 @@ def submit(
     execute_submit(submit_config)
 
 
-@cli.command()
-def docker(
-    commands: List[str],
-    sync: bool = True,
-    # volumes: Annotated[List[str], typer.Option(default_factory=DockerDefault("volumes"))],
-    # gpus: Annotated[str, typer.Option(default_factory=DockerDefault("gpus"))],
-    # sync: Annotated[bool, typer.Option(default_factory=DockerDefault("sync"))],
-    # imagename: Annotated[str, typer.Option(default_factory=DockerDefault("imagename"))],
-    # dockerfile: Annotated[str, typer.Option(default_factory=DockerDefault("dockerfile"))],
-):
-    """Builds the docker images on the remote machine"""
+@docker_app.callback()
+def docker_callback():
     cli_config.check_docker(msg=f"docker requires a Docker configuration in '{CONFIG_FILENAME}'")
-    config = cli_config.docker
-    execute_docker_command(config, commands, sync)
+
+
+@docker_app.command("submit")
+def docker_submit(
+    commands: List[str],
+    dockerfile: Annotated[str, typer.Option(default_factory=DockerDefault("dockerfile"))],
+    imagename: Annotated[str, typer.Option(default_factory=DockerDefault("imagename"))],
+    gpus: Annotated[str, typer.Option(default_factory=DockerDefault("gpus"))],
+    sync: Annotated[bool, typer.Option(default_factory=DockerDefault("sync"))],
+):
+    """Build the image and run a container with the given command(s)."""
+    execute_docker_submit(cli_config.docker, commands, sync=sync, dockerfile=dockerfile, imagename=imagename, gpus=gpus)
+
+
+@docker_app.command("build")
+def docker_build(
+    dockerfile: Annotated[str, typer.Option(default_factory=DockerDefault("dockerfile"))],
+    imagename: Annotated[str, typer.Option(default_factory=DockerDefault("imagename"))],
+    sync: Annotated[bool, typer.Option(default_factory=DockerDefault("sync"))],
+):
+    """Build the Docker image."""
+    execute_docker_build(cli_config.docker, sync=sync, dockerfile=dockerfile, imagename=imagename)
+
+
+@docker_app.command("logs")
+def docker_logs(
+    imagename: Annotated[str, typer.Option(default_factory=DockerDefault("imagename"))],
+    container_id: str | None = None,
+    all: bool = False,
+    n: int | None = None,
+):
+    """Show logs from a container (defaults to last run container)."""
+    execute_docker_logs(cli_config.docker, container_id=container_id, imagename=imagename, all=all, n=n)
+
+
+@docker_app.command("stop")
+def docker_stop(container_id: str | None = None):
+    """Stop a running container (defaults to last run container)."""
+    execute_docker_stop(cli_config.docker, container_id=container_id)
+
+
+@docker_app.command("stats")
+def docker_stats():
+    """List running containers (docker ps)."""
+    execute_docker_stats(cli_config.docker)
+
+
+@docker_app.command("history")
+def docker_history():
+    """Show history of past Docker runs."""
+    execute_docker_history(cli_config.docker)
 
 
 @cli.command()
