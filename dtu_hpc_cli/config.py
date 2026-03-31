@@ -2,6 +2,7 @@ import dataclasses
 import json
 from hashlib import sha256
 from pathlib import Path
+from typing import List
 
 from git import Repo
 
@@ -25,6 +26,15 @@ class DockerVolumesConfig:
     hostpath: str
     containerpath: str
     permissions: str
+
+
+@dataclasses.dataclass
+class DockerResubmitConfig:
+    container_id: str | None
+    commands: List[str] | None
+    dockerfile: str | None
+    imagename: str | None
+    gpus: str | None
 
 
 @dataclasses.dataclass

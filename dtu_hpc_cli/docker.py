@@ -1,3 +1,4 @@
+import dataclasses
 import json
 import time
 from datetime import datetime
@@ -5,6 +6,7 @@ from pathlib import Path
 from typing import List
 
 import typer
+from git import Repo
 from rich.console import Console
 from rich.progress import Progress
 from rich.progress import SpinnerColumn
@@ -13,6 +15,7 @@ from rich.table import Table
 
 from dtu_hpc_cli.client import get_client
 from dtu_hpc_cli.config import DockerConfig
+from dtu_hpc_cli.config import DockerResubmitConfig
 from dtu_hpc_cli.config import cli_config
 from dtu_hpc_cli.error import error_and_exit
 from dtu_hpc_cli.sync import execute_sync
@@ -32,7 +35,7 @@ def save_history(history: list[dict]):
     path.write_text(json.dumps(history))
 
 
-def add_to_history(config: DockerConfig, container_id: str, commands: List[str]):
+def add_to_history(config: DockerConfig, container_id: str, commands: List[str], branch: str | None = None):
     history = load_history()
     _d = {
         "dockerfile": config.dockerfile,
@@ -41,6 +44,8 @@ def add_to_history(config: DockerConfig, container_id: str, commands: List[str])
         "imagename": config.imagename,
         "commands": commands,
     }
+    if branch is not None:
+        _d["branch"] = branch
     history.append({"config": _d, "container_id": container_id, "timestamp": time.time()})
     save_history(history)
 
@@ -56,6 +61,7 @@ def execute_docker_history(config: DockerConfig):
     table = Table(title="Docker Run Commands", show_lines=True)
     table.add_column("Timestamp")
     table.add_column("Container ID(s)")
+    table.add_column("Branch")
     table.add_column("Dockerfile")
     table.add_column("GPU(s)")
     table.add_column("Volume(s)")
@@ -66,6 +72,7 @@ def execute_docker_history(config: DockerConfig):
         timestamp = datetime.fromtimestamp(entry["timestamp"]).strftime("%Y-%m-%d %H:%M:%S")
         container_id = entry["container_id"]
         _config = entry["config"]
+        branch = _config.get("branch") or "-"
         dockerfile = _config["dockerfile"]
         gpus = _config["gpus"] if _config["gpus"] else "-"
         volumes = "\n".join([f"{v['hostpath']}:{v['containerpath']}:{v['permissions']}" for v in _config["volumes"]])
@@ -73,7 +80,7 @@ def execute_docker_history(config: DockerConfig):
         # support both old "arguments" key and new "commands" key
         cmds = _config.get("commands") or _config.get("arguments") or []
         commands_str = " ".join(cmds)
-        table.add_row(str(timestamp), container_id, dockerfile, gpus, volumes, imagename, commands_str)
+        table.add_row(str(timestamp), container_id, branch, dockerfile, gpus, volumes, imagename, commands_str)
 
     console = Console()
     console.print(table)
@@ -201,4 +208,49 @@ def execute_docker_submit(
         error_and_exit(f"Run command failed with return code {returncode}.")
 
     container_id = stdout[:12]
-    add_to_history(config, container_id, commands)
+    with Repo(cli_config.project_root) as repo:
+        branch = repo.active_branch.name
+    add_to_history(config, container_id, commands, branch)
+
+
+def execute_docker_resubmit(docker_config: DockerConfig, resubmit_config: DockerResubmitConfig):
+    """Resubmit a previous docker run with optional overrides."""
+    history = load_history()
+
+    if not history:
+        error_and_exit("No docker history found. Submit a docker job first.")
+
+    # Use latest if no container_id provided
+    container_id = resubmit_config.container_id or history[-1]["container_id"]
+
+    # Find entry by container_id
+    entry = None
+    for hist_entry in history:
+        if hist_entry["container_id"] == container_id:
+            entry = hist_entry
+            break
+
+    if entry is None:
+        error_and_exit(f"Container ID '{container_id}' not found in history.")
+
+    original_config = entry["config"]
+
+    # Prepare overrides (use provided values or fall back to original)
+    commands = resubmit_config.commands if resubmit_config.commands is not None else original_config.get("commands", [])
+    dockerfile = (
+        resubmit_config.dockerfile if resubmit_config.dockerfile is not None else original_config.get("dockerfile")
+    )
+    imagename = resubmit_config.imagename if resubmit_config.imagename is not None else original_config.get("imagename")
+    gpus = resubmit_config.gpus if resubmit_config.gpus is not None else original_config.get("gpus")
+
+    # Create updated config by merging with original
+    updated_config = dataclasses.replace(docker_config, dockerfile=dockerfile, imagename=imagename, gpus=gpus)
+
+    execute_docker_submit(
+        updated_config,
+        commands,
+        sync=False,
+        dockerfile=dockerfile,
+        imagename=imagename,
+        gpus=gpus,
+    )

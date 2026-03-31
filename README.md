@@ -63,6 +63,7 @@ You can call it using the `dtu` command, which has the these subcommands:
   - **docker stop**: Stop a running container (defaults to last run). Supports `--container-id`.
   - **docker stats**: List running containers (`docker ps`).
   - **docker history**: Show history of past Docker runs.
+  - **docker resubmit**: Resubmit a previous Docker run (defaults to latest). Supports `--container-id`, `--commands`, `--dockerfile`, `--imagename`, and `--gpus` overrides.
 
 All commands will work out of the box on the HPC (except for `sync`). However, a big advantage of this tool is that you can call it from your local machine as well. You will need to [configure SSH](#ssh) for this to work.
 
@@ -321,6 +322,17 @@ The `dockerfile`, `imagename`, `gpus`, and `sync` options serve as defaults that
 > dtu docker build --dockerfile Dockerfile.dev --imagename my-image-dev
 > dtu docker logs --n 50
 > dtu docker stop
+> dtu docker history
+> dtu docker resubmit
+> dtu docker resubmit abc123def456 --gpus '2'
+```
+
+The `docker history` command shows a table of past Docker runs with their container IDs and configuration. The `docker resubmit` command allows you to re-run a previous Docker container with the same or modified parameters:
+
+``` txt
+> dtu docker resubmit                          # Resubmit the latest container
+> dtu docker resubmit abc123def456             # Resubmit a specific container by ID
+> dtu docker resubmit --gpus '2' --commands 'python train.py --epochs 50'  # Resubmit latest with overrides
 ```
 
 Use `dtu docker --help` to see all available subcommands, and `dtu docker <subcommand> --help` for the options of each subcommand.

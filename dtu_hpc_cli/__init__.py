@@ -6,9 +6,11 @@ from typing_extensions import Annotated
 from dtu_hpc_cli.config import SubmitConfig
 from dtu_hpc_cli.config import cli_config
 from dtu_hpc_cli.constants import CONFIG_FILENAME
+from dtu_hpc_cli.docker import DockerResubmitConfig
 from dtu_hpc_cli.docker import execute_docker_build
 from dtu_hpc_cli.docker import execute_docker_history
 from dtu_hpc_cli.docker import execute_docker_logs
+from dtu_hpc_cli.docker import execute_docker_resubmit
 from dtu_hpc_cli.docker import execute_docker_stats
 from dtu_hpc_cli.docker import execute_docker_stop
 from dtu_hpc_cli.docker import execute_docker_submit
@@ -470,6 +472,25 @@ def docker_stats():
 def docker_history():
     """Show history of past Docker runs."""
     execute_docker_history(cli_config.docker)
+
+
+@docker_app.command("resubmit")
+def docker_resubmit(
+    container_id: str | None = None,
+    commands: List[str] | None = None,
+    dockerfile: str | None = None,
+    imagename: str | None = None,
+    gpus: str | None = None,
+):
+    """Resubmit a previous Docker run (defaults to latest). Optionally with new parameters."""
+    config = DockerResubmitConfig(
+        container_id=container_id,
+        commands=commands,
+        dockerfile=dockerfile,
+        imagename=imagename,
+        gpus=gpus,
+    )
+    execute_docker_resubmit(cli_config.docker, config)
 
 
 @cli.command()
