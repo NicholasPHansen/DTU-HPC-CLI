@@ -462,8 +462,8 @@ def docker_stop(container_id: str | None = None):
     execute_docker_stop(cli_config.docker, container_id=container_id)
 
 
-@docker_app.command("stats")
-def docker_stats():
+@docker_app.command("jobs")
+def docker_jobs():
     """List running containers (docker ps)."""
     execute_docker_stats(cli_config.docker)
 
