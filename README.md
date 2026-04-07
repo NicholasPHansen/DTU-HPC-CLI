@@ -61,7 +61,7 @@ You can call it using the `dtu` command, which has the these subcommands:
   - **docker build**: Build the Docker image without running it. Supports `--dockerfile`, `--imagename`, and `--sync/--no-sync` overrides.
   - **docker logs**: Show logs from a container (defaults to last run). Supports `--imagename`, `--container-id`, `--all`, and `--n` options.
   - **docker stop**: Stop a running container (defaults to last run). Supports `--container-id`.
-  - **docker stats**: List running containers (`docker ps`).
+  - **docker jobs**: List running containers (`docker ps`).
   - **docker history**: Show history of past Docker runs.
   - **docker resubmit**: Resubmit a previous Docker run (defaults to latest). Supports `--container-id`, `--commands`, `--dockerfile`, `--imagename`, and `--gpus` overrides.
 
