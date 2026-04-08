@@ -56,6 +56,7 @@ You can call it using the `dtu` command, which has the these subcommands:
 - **stats**: Shows stats about a queue. It calls `nodestat` on the HPC.
 - **submit**: Submits a job to the HPC. Calls `bsub` on the HPC. NB. This command will automatically split a job into multiple jobs that run after each other when the walltime exceeds 24 hours. This is done because HPC limits GPU jobs to this duration. You can use the `--split-every` option to change duration at which jobs should be split.
 - **sync**: Synchronizes your local project with the project on the HPC. Requires that you have the `rsync` command. NB. It ignores everything in `.gitignore`.
+- **download**: Downloads files from the remote HPC directory to your local machine. By default respects `.gitignore` patterns and excludes the `.git` folder. Use `--list` for a dry-run preview or `--all` to download everything regardless of `.gitignore`.
 - **docker**: Build and run Docker containers on a remote machine. This is a command group with the following subcommands:
   - **docker submit**: Build the image and run a container with the given command(s). Supports `--dockerfile`, `--imagename`, `--gpus`, and `--sync/--no-sync` overrides.
   - **docker build**: Build the Docker image without running it. Supports `--dockerfile`, `--imagename`, and `--sync/--no-sync` overrides.
