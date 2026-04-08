@@ -240,12 +240,16 @@ class SubmitConfig:
     commands: list[str]
     confirm: bool
     cores: int
+    email: str | None
     feature: list[str] | None
     error: str | None
     gpus: int | None
     hosts: int
     memory: Memory
     model: str | None
+    notify_begin: bool
+    notify_end: bool
+    notify_fail: bool
     name: str
     output: str | None
     queue: str
@@ -265,6 +269,7 @@ class SubmitConfig:
             "confirm": True,
             "cores": 4,
             "date": None,
+            "email": None,
             "feature": None,
             "error": None,
             "gpus": None,
@@ -272,6 +277,9 @@ class SubmitConfig:
             "memory": "5GB",
             "model": None,
             "name": "NONAME",
+            "notify_begin": False,
+            "notify_end": False,
+            "notify_fail": True,
             "output": None,
             "queue": "hpc",
             "preamble": [],
@@ -319,6 +327,7 @@ class SubmitConfig:
             "confirm": self.confirm,
             "cores": self.cores,
             "date": str(self.date) if self.date is not None else None,
+            "email": self.email,
             "feature": self.feature,
             "error": self.error,
             "gpus": self.gpus,
@@ -326,6 +335,9 @@ class SubmitConfig:
             "memory": str(self.memory),
             "model": self.model,
             "name": self.name,
+            "notify_begin": self.notify_begin,
+            "notify_end": self.notify_end,
+            "notify_fail": self.notify_fail,
             "output": self.output,
             "queue": self.queue,
             "preamble": self.preamble,
@@ -344,6 +356,7 @@ class SubmitConfig:
             confirm=data.get("confirm", True),
             cores=data["cores"],
             date=Date.parse(data["date"]) if "date" in data else None,
+            email=data.get("email", None),
             feature=data["feature"],
             error=data["error"],
             gpus=data["gpus"],
@@ -351,6 +364,9 @@ class SubmitConfig:
             memory=Memory.parse(data["memory"]),
             model=data["model"],
             name=data["name"],
+            notify_begin=data.get("notify_begin", False),
+            notify_end=data.get("notify_end", False),
+            notify_fail=data.get("notify_fail", False),
             output=data["output"],
             queue=data["queue"],
             preamble=data["preamble"],

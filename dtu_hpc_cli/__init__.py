@@ -45,7 +45,7 @@ from dtu_hpc_cli.types import Duration
 from dtu_hpc_cli.types import Memory
 from dtu_hpc_cli.types import Time
 
-__version__ = "1.4.1"
+__version__ = "1.5.0"
 
 cli = typer.Typer(pretty_exceptions_show_locals=False)
 
@@ -298,6 +298,7 @@ def resubmit(
     command: List[str] = None,
     confirm: bool = None,
     cores: int = None,
+    email: str = None,
     error: str = None,
     feature: List[str] = None,
     gpus: int = None,
@@ -305,6 +306,9 @@ def resubmit(
     memory: Annotated[Memory, typer.Option(parser=Memory.parse)] = None,
     model: str = None,
     name: str = None,
+    notify_begin: bool = None,
+    notify_end: bool = None,
+    notify_fail: bool = None,
     output: str = None,
     preamble: List[str] = None,
     queue: str = None,
@@ -320,6 +324,7 @@ def resubmit(
         commands=command,
         confirm=confirm,
         cores=cores,
+        email=email,
         error=error,
         feature=feature,
         gpus=gpus,
@@ -327,6 +332,9 @@ def resubmit(
         memory=memory,
         model=model,
         name=name,
+        notify_begin=notify_begin,
+        notify_end=notify_end,
+        notify_fail=notify_fail,
         output=output,
         preamble=preamble,
         queue=queue,
@@ -382,6 +390,7 @@ def submit(
     branch: Annotated[str, typer.Option(default_factory=SubmitDefault("branch"))],
     cores: Annotated[int, typer.Option(default_factory=SubmitDefault("cores"))],
     confirm: Annotated[bool, typer.Option(default_factory=SubmitDefault("confirm"))],
+    email: Annotated[str, typer.Option(default_factory=SubmitDefault("email"))],
     error: Annotated[str, typer.Option(default_factory=SubmitDefault("error"))],
     feature: Annotated[List[str], typer.Option(default_factory=SubmitDefault("feature"))],
     gpus: Annotated[int, typer.Option(default_factory=SubmitDefault("gpus"))],
@@ -389,6 +398,9 @@ def submit(
     memory: Annotated[Memory, typer.Option(parser=Memory.parse, default_factory=SubmitDefault("memory"))],
     model: Annotated[str, typer.Option(default_factory=SubmitDefault("model"))],
     name: Annotated[str, typer.Option(default_factory=SubmitDefault("name"))],
+    notify_begin: Annotated[bool, typer.Option(default_factory=SubmitDefault("notify_begin"))],
+    notify_end: Annotated[bool, typer.Option(default_factory=SubmitDefault("notify_end"))],
+    notify_fail: Annotated[bool, typer.Option(default_factory=SubmitDefault("notify_fail"))],
     output: Annotated[str, typer.Option(default_factory=SubmitDefault("output"))],
     preamble: Annotated[List[str], typer.Option(default_factory=SubmitDefault("preamble"))],
     queue: Annotated[str, typer.Option(default_factory=SubmitDefault("queue"))],
@@ -403,6 +415,7 @@ def submit(
         commands=commands,
         confirm=confirm,
         cores=cores,
+        email=email,
         error=error,
         feature=feature,
         gpus=gpus,
@@ -410,6 +423,9 @@ def submit(
         memory=memory,
         model=model,
         name=name,
+        notify_begin=notify_begin,
+        notify_end=notify_end,
+        notify_fail=notify_fail,
         output=output,
         preamble=preamble,
         queue=queue,
