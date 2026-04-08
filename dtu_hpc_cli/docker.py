@@ -113,25 +113,41 @@ def _resolve_to_host(relative_path: str, config: DockerConfig) -> tuple[str, str
     return None
 
 
+def _ssh_find(hostpath: str) -> tuple[int, str]:
+    """Run find on remote via SSH subprocess without printing output."""
+    ssh = cli_config.ssh
+    result = subprocess.run(
+        [
+            "ssh",
+            "-i",
+            ssh.identityfile,
+            f"{ssh.user}@{ssh.hostname}",
+            f"find {hostpath} -type f",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode, result.stdout
+
+
 def execute_docker_volumes(config: DockerConfig):
     """List files in docker-mounted volumes using workdir-relative paths."""
     if not config.volumes:
         typer.echo("No volumes configured.")
         return
 
-    with get_client() as client:
-        for volume in config.volumes:
-            hostpath = volume["hostpath"].rstrip("/")
-            containerpath = volume["containerpath"]
-            vol_relative = _workdir_relative(containerpath, config.workdir)
-            typer.echo(f"\n{vol_relative}/:")
-            exit_code, stdout = client.run(f"find {hostpath} -type f")
-            if exit_code != 0 or not stdout.strip():
-                typer.echo("  (empty or inaccessible)")
-                continue
-            for line in stdout.strip().splitlines():
-                suffix = line[len(hostpath) :]
-                typer.echo(f"  {vol_relative}{suffix}")
+    for volume in config.volumes:
+        hostpath = volume["hostpath"].rstrip("/")
+        containerpath = volume["containerpath"]
+        vol_relative = _workdir_relative(containerpath, config.workdir)
+        typer.echo(f"\n{vol_relative}/:")
+        exit_code, stdout = _ssh_find(hostpath)
+        if exit_code != 0 or not stdout.strip():
+            typer.echo("  (empty or inaccessible)")
+            continue
+        for line in stdout.strip().splitlines():
+            suffix = line[len(hostpath) :]
+            typer.echo(f"  {vol_relative}{suffix}")
 
 
 def execute_docker_download(config: DockerConfig, path: str, local_path: str):
