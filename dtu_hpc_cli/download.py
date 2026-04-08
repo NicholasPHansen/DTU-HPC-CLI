@@ -1,36 +1,11 @@
 import subprocess
 
-import typer
 from rich.progress import Progress
 from rich.progress import SpinnerColumn
 from rich.progress import TextColumn
 
-from dtu_hpc_cli.client import get_client
 from dtu_hpc_cli.config import cli_config
 from dtu_hpc_cli.error import error_and_exit
-
-
-def _list_docker_volumes():
-    """List files in docker-mounted volumes with container paths."""
-    docker = cli_config.docker
-    if docker is None or not docker.volumes:
-        return
-
-    typer.echo("\nDocker Volumes:")
-    with get_client() as client:
-        for volume in docker.volumes:
-            hostpath = volume["hostpath"]
-            containerpath = volume["containerpath"].rstrip("/")
-            exit_code, stdout = client.run(f"find {hostpath} -type f")
-            if exit_code != 0 or not stdout.strip():
-                continue
-            for line in stdout.strip().splitlines():
-                # Remap hostpath prefix → containerpath
-                relative = line[len(hostpath) :]  # e.g. "/input.csv"
-                container_file = (
-                    containerpath + relative
-                )  # e.g. "data/raw/input.csv"
-                typer.echo(f"  {container_file}")
 
 
 def execute_download(
@@ -74,7 +49,6 @@ def execute_download(
                 stdout = result.stdout.decode()
                 if stdout:
                     print(stdout)
-                _list_docker_volumes()
         except subprocess.CalledProcessError as e:
             error_and_exit(f"Download failed:\n{e.stderr.decode()}")
         progress.update(task, completed=True)

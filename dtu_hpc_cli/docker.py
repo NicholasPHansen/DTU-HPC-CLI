@@ -86,6 +86,30 @@ def execute_docker_history(config: DockerConfig):
     console.print(table)
 
 
+def execute_docker_volumes(config: DockerConfig):
+    """List files in docker-mounted volumes using container paths."""
+    if not config.volumes:
+        typer.echo("No volumes configured.")
+        return
+
+    with get_client() as client:
+        for volume in config.volumes:
+            hostpath = volume["hostpath"]
+            containerpath = volume["containerpath"].rstrip("/")
+            typer.echo(f"\n{containerpath}:")
+            exit_code, stdout = client.run(f"find {hostpath} -type f")
+            if exit_code != 0 or not stdout.strip():
+                typer.echo("  (empty or inaccessible)")
+                continue
+            for line in stdout.strip().splitlines():
+                # Remap hostpath prefix → containerpath
+                relative = line[len(hostpath) :]  # e.g. "/input.csv"
+                container_file = (
+                    containerpath + relative
+                )  # e.g. "data/raw/input.csv"
+                typer.echo(f"  {container_file}")
+
+
 def execute_docker_stats(config: DockerConfig):
     """List running containers (docker ps)."""
     with get_client() as client:

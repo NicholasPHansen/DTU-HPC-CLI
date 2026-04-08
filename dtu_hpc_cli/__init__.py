@@ -14,6 +14,7 @@ from dtu_hpc_cli.docker import execute_docker_resubmit
 from dtu_hpc_cli.docker import execute_docker_stats
 from dtu_hpc_cli.docker import execute_docker_stop
 from dtu_hpc_cli.docker import execute_docker_submit
+from dtu_hpc_cli.docker import execute_docker_volumes
 from dtu_hpc_cli.download import execute_download
 from dtu_hpc_cli.get_command import execute_get_command
 from dtu_hpc_cli.get_options import Option
@@ -473,6 +474,12 @@ def docker_jobs():
 def docker_history():
     """Show history of past Docker runs."""
     execute_docker_history(cli_config.docker)
+
+
+@docker_app.command("volumes")
+def docker_volumes():
+    """List files in docker-mounted volumes using container paths."""
+    execute_docker_volumes(cli_config.docker)
 
 
 @docker_app.command("resubmit")
