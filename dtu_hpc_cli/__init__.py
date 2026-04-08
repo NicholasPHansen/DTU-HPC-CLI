@@ -486,14 +486,26 @@ def docker_volumes():
 @docker_app.command("download")
 def docker_download(
     path: Annotated[
-        str,
+        str | None,
         typer.Argument(help="Workdir-relative path to download (as shown by docker volumes)"),
-    ],
+    ] = None,
     local_path: Annotated[
         str, typer.Option("--local-path", "-l", help="Local destination path")
     ] = ".",
+    list_only: Annotated[
+        bool,
+        typer.Option(
+            "--list", help="List files in docker-mounted volumes (same as docker volumes)"
+        ),
+    ] = False,
 ):
     """Download a file from a docker volume by its workdir-relative path."""
+    if list_only:
+        execute_docker_volumes(cli_config.docker)
+        return
+    if path is None:
+        typer.echo("Error: Missing argument 'PATH'. Use --list to see available files.")
+        raise typer.Exit(1)
     execute_docker_download(cli_config.docker, path=path, local_path=local_path)
 
 

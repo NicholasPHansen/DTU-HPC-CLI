@@ -147,7 +147,7 @@ def execute_docker_volumes(config: DockerConfig):
             continue
         for line in stdout.strip().splitlines():
             suffix = line[len(hostpath) :]
-            typer.echo(f"  {vol_relative}/{suffix}")
+            typer.echo(f"  {vol_relative}{suffix}")
 
 
 def execute_docker_download(config: DockerConfig, path: str, local_path: str):
