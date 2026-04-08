@@ -438,13 +438,13 @@ def docker_submit(
     execute_docker_submit(cli_config.docker, commands, sync=sync, dockerfile=dockerfile, imagename=imagename, gpus=gpus)
 
 
-@docker_app.command("build")
-def docker_build(
+@docker_app.command("install")
+def docker_install(
     dockerfile: Annotated[str, typer.Option(default_factory=DockerDefault("dockerfile"))],
     imagename: Annotated[str, typer.Option(default_factory=DockerDefault("imagename"))],
     sync: Annotated[bool, typer.Option(default_factory=DockerDefault("sync"))],
 ):
-    """Build the Docker image."""
+    """Install (build) the Docker image."""
     execute_docker_build(cli_config.docker, sync=sync, dockerfile=dockerfile, imagename=imagename)
 
 
@@ -489,14 +489,10 @@ def docker_download(
         str | None,
         typer.Argument(help="Workdir-relative path to download (as shown by docker volumes)"),
     ] = None,
-    local_path: Annotated[
-        str, typer.Option("--local-path", "-l", help="Local destination path")
-    ] = ".",
+    local_path: Annotated[str, typer.Option("--local-path", "-l", help="Local destination path")] = ".",
     list_only: Annotated[
         bool,
-        typer.Option(
-            "--list", help="List files in docker-mounted volumes (same as docker volumes)"
-        ),
+        typer.Option("--list", help="List files in docker-mounted volumes (same as docker volumes)"),
     ] = False,
 ):
     """Download a file from a docker volume by its workdir-relative path."""
@@ -545,14 +541,10 @@ def download(
             help="Sub-path within remote directory to download",
         ),
     ] = None,
-    local_path: Annotated[
-        str, typer.Option("--local-path", "-l", help="Local destination path")
-    ] = ".",
+    local_path: Annotated[str, typer.Option("--local-path", "-l", help="Local destination path")] = ".",
     list_only: Annotated[
         bool,
-        typer.Option(
-            "--list", help="Preview files without transferring (dry-run)"
-        ),
+        typer.Option("--list", help="Preview files without transferring (dry-run)"),
     ] = False,
     all_files: Annotated[
         bool,
