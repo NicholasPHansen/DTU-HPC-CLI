@@ -10,7 +10,7 @@ from dtu_hpc_cli.error import error_and_exit
 
 def execute_download(
     remote_subpath: str | None = None,
-    local_path: str = ".",
+    local_path: str | None = None,
     list_only: bool = False,
     all_files: bool = False,
 ):
@@ -18,6 +18,9 @@ def execute_download(
     base = cli_config.remote_path
     source = f"{base}/{remote_subpath}" if remote_subpath else base
     destination = f"{ssh.user}@{ssh.hostname}:{source}"
+
+    if local_path is None:
+        local_path = str(cli_config.project_root)
 
     command = [
         "rsync",
@@ -33,6 +36,13 @@ def execute_download(
         command.append("--ignore-times")
     else:
         command.append("--exclude-from=.gitignore")
+
+    # When downloading a subpath, use --relative to preserve directory structure
+    if remote_subpath:
+        command.append("--relative")
+        # Mark the beginning of the relative path with ./
+        source_with_marker = f"{base}/./{ remote_subpath}"
+        destination = f"{ssh.user}@{ssh.hostname}:{source_with_marker}"
 
     command.extend([
         f"{destination}/",

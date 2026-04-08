@@ -150,7 +150,7 @@ def execute_docker_volumes(config: DockerConfig):
             typer.echo(f"  {vol_relative}{suffix}")
 
 
-def execute_docker_download(config: DockerConfig, path: str, local_path: str):
+def execute_docker_download(config: DockerConfig, path: str, local_path: str | None = None):
     """Download a file from a docker volume by its workdir-relative path."""
     result = _resolve_to_host(path, config)
     if result is None:
@@ -158,6 +158,12 @@ def execute_docker_download(config: DockerConfig, path: str, local_path: str):
 
     host_path, _ = result
     ssh = cli_config.ssh
+
+    # If no local_path provided, compute it from the workdir-relative path
+    if local_path is None:
+        parent_dir = cli_config.project_root / Path(path).parent
+        parent_dir.mkdir(parents=True, exist_ok=True)
+        local_path = str(parent_dir)
 
     with Progress(
         SpinnerColumn(),

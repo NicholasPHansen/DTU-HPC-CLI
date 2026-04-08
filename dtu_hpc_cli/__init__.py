@@ -489,13 +489,18 @@ def docker_download(
         str | None,
         typer.Argument(help="Workdir-relative path to download (as shown by docker volumes)"),
     ] = None,
-    local_path: Annotated[str, typer.Option("--local-path", "-l", help="Local destination path")] = ".",
+    local_path: Annotated[
+        str | None,
+        typer.Option("--local-path", "-l", help="Local destination path (defaults to project root)"),
+    ] = None,
     list_only: Annotated[
         bool,
         typer.Option("--list", help="List files in docker-mounted volumes (same as docker volumes)"),
     ] = False,
 ):
-    """Download a file from a docker volume by its workdir-relative path."""
+    """Download a file from a docker volume by its workdir-relative path.
+
+    Files are downloaded preserving their directory structure relative to project root."""
     if list_only:
         execute_docker_volumes(cli_config.docker)
         return
@@ -541,7 +546,10 @@ def download(
             help="Sub-path within remote directory to download",
         ),
     ] = None,
-    local_path: Annotated[str, typer.Option("--local-path", "-l", help="Local destination path")] = ".",
+    local_path: Annotated[
+        str | None,
+        typer.Option("--local-path", "-l", help="Local destination path (defaults to project root)"),
+    ] = None,
     list_only: Annotated[
         bool,
         typer.Option("--list", help="Preview files without transferring (dry-run)"),
@@ -557,7 +565,8 @@ def download(
     """Download files from the remote HPC directory to local.
 
     By default, files matching .gitignore patterns are excluded.
-    Use --all to download all files regardless of .gitignore."""
+    Use --all to download all files regardless of .gitignore.
+    Files are downloaded preserving their directory structure (relative to project root)."""
     cli_config.check_ssh(msg=f"Download requires a SSH configuration in '{CONFIG_FILENAME}'.")
     execute_download(
         remote_subpath=remote_path,
