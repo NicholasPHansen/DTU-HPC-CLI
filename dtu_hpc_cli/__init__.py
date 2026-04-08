@@ -14,6 +14,7 @@ from dtu_hpc_cli.docker import execute_docker_resubmit
 from dtu_hpc_cli.docker import execute_docker_stats
 from dtu_hpc_cli.docker import execute_docker_stop
 from dtu_hpc_cli.docker import execute_docker_submit
+from dtu_hpc_cli.download import execute_download
 from dtu_hpc_cli.get_command import execute_get_command
 from dtu_hpc_cli.get_options import Option
 from dtu_hpc_cli.get_options import execute_get_options
@@ -498,6 +499,46 @@ def sync():
     """Sync the local directory with the remote directory on the HPC."""
     cli_config.check_ssh(msg=f"Sync requires a SSH configuration in '{CONFIG_FILENAME}'.")
     execute_sync()
+
+
+@cli.command()
+def download(
+    remote_path: Annotated[
+        str | None,
+        typer.Option(
+            "--remote-path",
+            "-r",
+            help="Sub-path within remote directory to download",
+        ),
+    ] = None,
+    local_path: Annotated[
+        str, typer.Option("--local-path", "-l", help="Local destination path")
+    ] = ".",
+    list_only: Annotated[
+        bool,
+        typer.Option(
+            "--list", help="Preview files without transferring (dry-run)"
+        ),
+    ] = False,
+    all_files: Annotated[
+        bool,
+        typer.Option(
+            "--all",
+            help="Download all files, including those in .gitignore (ignores .gitignore)",
+        ),
+    ] = False,
+):
+    """Download files from the remote HPC directory to local.
+
+    By default, files matching .gitignore patterns are excluded.
+    Use --all to download all files regardless of .gitignore."""
+    cli_config.check_ssh(msg=f"Download requires a SSH configuration in '{CONFIG_FILENAME}'.")
+    execute_download(
+        remote_subpath=remote_path,
+        local_path=local_path,
+        list_only=list_only,
+        all_files=all_files,
+    )
 
 
 if __name__ == "__main__":
