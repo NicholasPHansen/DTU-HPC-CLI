@@ -147,16 +147,14 @@ def execute_docker_volumes(config: DockerConfig):
             continue
         for line in stdout.strip().splitlines():
             suffix = line[len(hostpath) :]
-            typer.echo(f"  {vol_relative}{suffix}")
+            typer.echo(f"  {vol_relative}/{suffix}")
 
 
 def execute_docker_download(config: DockerConfig, path: str, local_path: str):
     """Download a file from a docker volume by its workdir-relative path."""
     result = _resolve_to_host(path, config)
     if result is None:
-        error_and_exit(
-            f"Path '{path}' does not match any configured docker volume."
-        )
+        error_and_exit(f"Path '{path}' does not match any configured docker volume.")
 
     host_path, _ = result
     ssh = cli_config.ssh
