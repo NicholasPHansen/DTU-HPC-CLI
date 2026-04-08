@@ -45,6 +45,7 @@ class DockerConfig:
     ports: list[str]
     gpus: str
     sync: bool
+    workdir: str
 
     @classmethod
     def load(cls, config: dict):
@@ -69,6 +70,9 @@ class DockerConfig:
 
         if "sync" not in docker:
             docker["sync"] = True
+
+        if "workdir" not in docker:
+            docker["workdir"] = "/"
 
         return cls(**docker)
 

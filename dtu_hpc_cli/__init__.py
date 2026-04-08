@@ -8,6 +8,7 @@ from dtu_hpc_cli.config import cli_config
 from dtu_hpc_cli.constants import CONFIG_FILENAME
 from dtu_hpc_cli.docker import DockerResubmitConfig
 from dtu_hpc_cli.docker import execute_docker_build
+from dtu_hpc_cli.docker import execute_docker_download
 from dtu_hpc_cli.docker import execute_docker_history
 from dtu_hpc_cli.docker import execute_docker_logs
 from dtu_hpc_cli.docker import execute_docker_resubmit
@@ -478,8 +479,22 @@ def docker_history():
 
 @docker_app.command("volumes")
 def docker_volumes():
-    """List files in docker-mounted volumes using container paths."""
+    """List files in docker-mounted volumes using workdir-relative paths."""
     execute_docker_volumes(cli_config.docker)
+
+
+@docker_app.command("download")
+def docker_download(
+    path: Annotated[
+        str,
+        typer.Argument(help="Workdir-relative path to download (as shown by docker volumes)"),
+    ],
+    local_path: Annotated[
+        str, typer.Option("--local-path", "-l", help="Local destination path")
+    ] = ".",
+):
+    """Download a file from a docker volume by its workdir-relative path."""
+    execute_docker_download(cli_config.docker, path=path, local_path=local_path)
 
 
 @docker_app.command("resubmit")

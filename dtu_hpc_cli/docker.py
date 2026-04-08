@@ -1,5 +1,6 @@
 import dataclasses
 import json
+import subprocess
 import time
 from datetime import datetime
 from pathlib import Path
@@ -86,28 +87,83 @@ def execute_docker_history(config: DockerConfig):
     console.print(table)
 
 
+def _workdir_relative(containerpath: str, workdir: str) -> str:
+    """Convert an absolute container path to a workdir-relative path."""
+    workdir = workdir.rstrip("/")
+    containerpath = containerpath.rstrip("/")
+    if containerpath.startswith(workdir + "/"):
+        return containerpath[len(workdir) + 1 :]
+    if containerpath == workdir:
+        return "."
+    return containerpath
+
+
+def _resolve_to_host(relative_path: str, config: DockerConfig) -> tuple[str, str] | None:
+    """Map a workdir-relative path back to a host path and volume hostpath."""
+    workdir = config.workdir.rstrip("/")
+    for volume in config.volumes:
+        containerpath = volume["containerpath"].rstrip("/")
+        hostpath = volume["hostpath"].rstrip("/")
+        # Build the workdir-relative prefix for this volume
+        vol_relative = _workdir_relative(containerpath, workdir)
+        if relative_path.startswith(vol_relative + "/") or relative_path == vol_relative:
+            # Strip the volume's relative prefix, append to hostpath
+            suffix = relative_path[len(vol_relative) :]
+            return hostpath + suffix, hostpath
+    return None
+
+
 def execute_docker_volumes(config: DockerConfig):
-    """List files in docker-mounted volumes using container paths."""
+    """List files in docker-mounted volumes using workdir-relative paths."""
     if not config.volumes:
         typer.echo("No volumes configured.")
         return
 
     with get_client() as client:
         for volume in config.volumes:
-            hostpath = volume["hostpath"]
-            containerpath = volume["containerpath"].rstrip("/")
-            typer.echo(f"\n{containerpath}:")
+            hostpath = volume["hostpath"].rstrip("/")
+            containerpath = volume["containerpath"]
+            vol_relative = _workdir_relative(containerpath, config.workdir)
+            typer.echo(f"\n{vol_relative}/:")
             exit_code, stdout = client.run(f"find {hostpath} -type f")
             if exit_code != 0 or not stdout.strip():
                 typer.echo("  (empty or inaccessible)")
                 continue
             for line in stdout.strip().splitlines():
-                # Remap hostpath prefix → containerpath
-                relative = line[len(hostpath) :]  # e.g. "/input.csv"
-                container_file = (
-                    containerpath + relative
-                )  # e.g. "data/raw/input.csv"
-                typer.echo(f"  {container_file}")
+                suffix = line[len(hostpath) :]
+                typer.echo(f"  {vol_relative}{suffix}")
+
+
+def execute_docker_download(config: DockerConfig, path: str, local_path: str):
+    """Download a file from a docker volume by its workdir-relative path."""
+    result = _resolve_to_host(path, config)
+    if result is None:
+        error_and_exit(
+            f"Path '{path}' does not match any configured docker volume."
+        )
+
+    host_path, _ = result
+    ssh = cli_config.ssh
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+    ) as progress:
+        task = progress.add_task(description="Downloading", total=None)
+        progress.start()
+        try:
+            command = [
+                "rsync",
+                "-avz",
+                "-e",
+                f"ssh -i {ssh.identityfile}",
+                f"{ssh.user}@{ssh.hostname}:{host_path}",
+                local_path,
+            ]
+            subprocess.run(command, check=True, capture_output=True)
+        except subprocess.CalledProcessError as e:
+            error_and_exit(f"Download failed:\n{e.stderr.decode()}")
+        progress.update(task, completed=True)
 
 
 def execute_docker_stats(config: DockerConfig):
