@@ -256,20 +256,15 @@ def execute_docker_build(config: DockerConfig, sync: bool, dockerfile: str | Non
         error_and_exit(f"Build command failed with return code {returncode}.")
 
 
-def execute_docker_submit(
+def execute_docker_run(
     config: DockerConfig,
     commands: List[str],
-    sync: bool,
-    dockerfile: str | None = None,
     imagename: str | None = None,
     gpus: str | None = None,
 ):
-    """Build the image and run a container with the given command(s)."""
-    dockerfile = dockerfile or config.dockerfile
+    """Run a container from an already-built image."""
     imagename = imagename or config.imagename
     gpus = gpus if gpus is not None else config.gpus
-
-    execute_docker_build(config, sync, dockerfile=dockerfile, imagename=imagename)
 
     volumes = []
     if config.volumes is not None:
@@ -311,6 +306,23 @@ def execute_docker_submit(
     with Repo(cli_config.project_root) as repo:
         branch = repo.active_branch.name
     add_to_history(config, container_id, commands, branch)
+
+
+def execute_docker_submit(
+    config: DockerConfig,
+    commands: List[str],
+    sync: bool,
+    dockerfile: str | None = None,
+    imagename: str | None = None,
+    gpus: str | None = None,
+):
+    """Build the image and run a container with the given command(s)."""
+    dockerfile = dockerfile or config.dockerfile
+    imagename = imagename or config.imagename
+    gpus = gpus if gpus is not None else config.gpus
+
+    execute_docker_build(config, sync, dockerfile=dockerfile, imagename=imagename)
+    execute_docker_run(config, commands, imagename=imagename, gpus=gpus)
 
 
 def execute_docker_resubmit(docker_config: DockerConfig, resubmit_config: DockerResubmitConfig):

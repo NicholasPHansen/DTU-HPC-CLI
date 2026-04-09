@@ -13,6 +13,7 @@ from dtu_hpc_cli.docker import execute_docker_history
 from dtu_hpc_cli.docker import execute_docker_logs
 from dtu_hpc_cli.docker import execute_docker_remove
 from dtu_hpc_cli.docker import execute_docker_resubmit
+from dtu_hpc_cli.docker import execute_docker_run
 from dtu_hpc_cli.docker import execute_docker_stats
 from dtu_hpc_cli.docker import execute_docker_stop
 from dtu_hpc_cli.docker import execute_docker_submit
@@ -453,6 +454,16 @@ def docker_submit(
 ):
     """Build the image and run a container with the given command(s)."""
     execute_docker_submit(cli_config.docker, commands, sync=sync, dockerfile=dockerfile, imagename=imagename, gpus=gpus)
+
+
+@docker_app.command("run")
+def docker_run(
+    commands: List[str],
+    imagename: Annotated[str, typer.Option(default_factory=DockerDefault("imagename"))],
+    gpus: Annotated[str, typer.Option(default_factory=DockerDefault("gpus"))],
+):
+    """Run a container from an already-built image."""
+    execute_docker_run(cli_config.docker, commands, imagename=imagename, gpus=gpus)
 
 
 @docker_app.command("install")

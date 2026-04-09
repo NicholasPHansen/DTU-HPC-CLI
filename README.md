@@ -59,6 +59,7 @@ You can call it using the `dtu` command, which has the these subcommands:
 - **download**: Downloads files from the remote HPC directory to your local machine. By default respects `.gitignore` patterns and excludes the `.git` folder. Use `--list` for a dry-run preview or `--all` to download everything regardless of `.gitignore`.
 - **docker**: Build and run Docker containers on a remote machine. This is a command group with the following subcommands:
   - **docker submit**: Build the image and run a container with the given command(s). Supports `--dockerfile`, `--imagename`, `--gpus`, and `--sync/--no-sync` overrides.
+  - **docker run**: Run a container from an already-built image. Supports `--imagename` and `--gpus` overrides.
   - **docker install**: Build the Docker image without running it. Supports `--dockerfile`, `--imagename`, and `--sync/--no-sync` overrides.
   - **docker logs**: Show logs from a container (defaults to last run). Supports `--imagename`, `--container-id`, `--all`, and `--n` options.
   - **docker stop**: Stop a running container (defaults to last run). Supports `--container-id`.
@@ -327,6 +328,7 @@ The `dockerfile`, `imagename`, `gpus`, and `sync` options serve as defaults that
 
 ``` txt
 > dtu docker submit --gpus all 'python train.py --epochs 10'
+> dtu docker run 'python train.py --epochs 20'
 > dtu docker install --dockerfile Dockerfile.dev --imagename my-image-dev
 > dtu docker logs --n 50
 > dtu docker stop
@@ -339,7 +341,17 @@ The `dockerfile`, `imagename`, `gpus`, and `sync` options serve as defaults that
 > dtu docker download results/model.pth
 ```
 
-The `docker history` command shows a table of past Docker runs with their container IDs and configuration. The `docker resubmit` command allows you to re-run a previous Docker container with the same or modified parameters:
+The `docker history` command shows a table of past Docker runs with their container IDs and configuration.
+
+The `docker run` command runs a container from an already-built image (unlike `docker submit` which builds first):
+
+``` txt
+> dtu docker run 'python train.py'             # Run with default image
+> dtu docker run --gpus all 'python train.py'
+> dtu docker run --imagename my-other-image 'python train.py'
+```
+
+The `docker resubmit` command allows you to re-run a previous Docker container with the same or modified parameters:
 
 ``` txt
 > dtu docker resubmit                          # Resubmit the latest container
