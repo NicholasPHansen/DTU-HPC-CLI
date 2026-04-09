@@ -11,6 +11,7 @@ from dtu_hpc_cli.docker import execute_docker_build
 from dtu_hpc_cli.docker import execute_docker_download
 from dtu_hpc_cli.docker import execute_docker_history
 from dtu_hpc_cli.docker import execute_docker_logs
+from dtu_hpc_cli.docker import execute_docker_remove
 from dtu_hpc_cli.docker import execute_docker_resubmit
 from dtu_hpc_cli.docker import execute_docker_stats
 from dtu_hpc_cli.docker import execute_docker_stop
@@ -543,6 +544,15 @@ def docker_resubmit(
         gpus=gpus,
     )
     execute_docker_resubmit(cli_config.docker, config)
+
+
+@docker_app.command("remove")
+def docker_remove(
+    container_ids: Annotated[List[str], typer.Argument()] = None,
+    from_history: bool = False,
+):
+    """Remove container(s) (defaults to last run container). Optionally remove from history."""
+    execute_docker_remove(cli_config.docker, container_ids=container_ids, from_history=from_history)
 
 
 @cli.command()

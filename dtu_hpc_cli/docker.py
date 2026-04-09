@@ -354,3 +354,33 @@ def execute_docker_resubmit(docker_config: DockerConfig, resubmit_config: Docker
         imagename=imagename,
         gpus=gpus,
     )
+
+
+def execute_docker_remove(config: DockerConfig, container_ids: list[str] | None = None, from_history: bool = False):
+    """Remove container(s) from docker and optionally from history."""
+    if not container_ids:
+        # Remove latest if no container_ids provided
+        history = load_history()
+        if not history:
+            error_and_exit("No container history found. Provide container IDs or submit a docker job first.")
+        container_ids = [history[-1]["container_id"]]
+
+    # Remove containers from docker
+    with get_client() as client:
+        for container_id in container_ids:
+            if len(container_id) != 12:
+                error_and_exit(f"Expected 12-character container ID, got: {container_id}")
+            cmd = f"docker rm {container_id}"
+            returncode, _ = client.run(cmd, cwd=cli_config.remote_path)
+            if returncode == 0:
+                typer.echo(f"Removed container {container_id}")
+            else:
+                typer.echo(f"Failed to remove container {container_id}")
+
+    # Optionally remove from history
+    if from_history:
+        history = load_history()
+        container_ids_set = set(container_ids)
+        history = [entry for entry in history if entry["container_id"] not in container_ids_set]
+        save_history(history)
+        typer.echo(f"Removed {len(container_ids)} container(s) from history")

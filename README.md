@@ -59,11 +59,14 @@ You can call it using the `dtu` command, which has the these subcommands:
 - **download**: Downloads files from the remote HPC directory to your local machine. By default respects `.gitignore` patterns and excludes the `.git` folder. Use `--list` for a dry-run preview or `--all` to download everything regardless of `.gitignore`.
 - **docker**: Build and run Docker containers on a remote machine. This is a command group with the following subcommands:
   - **docker submit**: Build the image and run a container with the given command(s). Supports `--dockerfile`, `--imagename`, `--gpus`, and `--sync/--no-sync` overrides.
-  - **docker build**: Build the Docker image without running it. Supports `--dockerfile`, `--imagename`, and `--sync/--no-sync` overrides.
+  - **docker install**: Build the Docker image without running it. Supports `--dockerfile`, `--imagename`, and `--sync/--no-sync` overrides.
   - **docker logs**: Show logs from a container (defaults to last run). Supports `--imagename`, `--container-id`, `--all`, and `--n` options.
   - **docker stop**: Stop a running container (defaults to last run). Supports `--container-id`.
+  - **docker remove**: Remove container(s) (defaults to last run). Supports `--from-history` to also remove from history.
   - **docker jobs**: List running containers (`docker ps`).
   - **docker history**: Show history of past Docker runs.
+  - **docker volumes**: List files in docker-mounted volumes using workdir-relative paths.
+  - **docker download**: Download a file from a docker volume by its workdir-relative path.
   - **docker resubmit**: Resubmit a previous Docker run (defaults to latest). Supports `--container-id`, `--commands`, `--dockerfile`, `--imagename`, and `--gpus` overrides.
 
 All commands will work out of the box on the HPC (except for `sync`). However, a big advantage of this tool is that you can call it from your local machine as well. You will need to [configure SSH](#ssh) for this to work.
@@ -324,12 +327,16 @@ The `dockerfile`, `imagename`, `gpus`, and `sync` options serve as defaults that
 
 ``` txt
 > dtu docker submit --gpus all 'python train.py --epochs 10'
-> dtu docker build --dockerfile Dockerfile.dev --imagename my-image-dev
+> dtu docker install --dockerfile Dockerfile.dev --imagename my-image-dev
 > dtu docker logs --n 50
 > dtu docker stop
+> dtu docker remove
+> dtu docker remove abc123def456 --from-history
 > dtu docker history
 > dtu docker resubmit
 > dtu docker resubmit abc123def456 --gpus '2'
+> dtu docker volumes
+> dtu docker download results/model.pth
 ```
 
 The `docker history` command shows a table of past Docker runs with their container IDs and configuration. The `docker resubmit` command allows you to re-run a previous Docker container with the same or modified parameters:
@@ -338,6 +345,15 @@ The `docker history` command shows a table of past Docker runs with their contai
 > dtu docker resubmit                          # Resubmit the latest container
 > dtu docker resubmit abc123def456             # Resubmit a specific container by ID
 > dtu docker resubmit --gpus '2' --commands 'python train.py --epochs 50'  # Resubmit latest with overrides
+```
+
+The `docker remove` command removes stopped containers:
+
+``` txt
+> dtu docker remove                            # Remove the latest container
+> dtu docker remove abc123def456               # Remove a specific container by ID
+> dtu docker remove --from-history             # Also remove from history
+> dtu docker remove abc123def456 --from-history # Remove specific container and from history
 ```
 
 Use `dtu docker --help` to see all available subcommands, and `dtu docker <subcommand> --help` for the options of each subcommand.
